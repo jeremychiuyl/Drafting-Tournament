@@ -31,7 +31,6 @@
     .status-card h2 { font-size: 1.4rem; color: var(--primary-color); margin-bottom: 5px; }
     .status-card p { font-size: 1.1rem; color: #555; }
 
-    /* 管理員專區 */
     .admin-section { border: 2px dashed var(--admin-color); background: #fdf7ff; display: none; }
     .admin-section h3 { margin-bottom: 10px; color: var(--admin-color); display: flex; align-items: center; gap: 8px; }
     textarea { width: 100%; height: 80px; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 10px; resize: vertical; font-family: inherit; }
@@ -64,7 +63,7 @@
     .modal-btns { display: flex; gap: 10px; justify-content: center; }
   </style>
 
-  <!-- Firebase SDKs -->
+  <!-- Firebase SDKs (Compat 模式) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 </head>
@@ -94,7 +93,7 @@
     <p id="statusDesc">正在連接資料庫...</p>
   </div>
 
-  <!-- 管理員控制台 (僅 Admin 登入後顯示) -->
+  <!-- 管理員控制台 -->
   <div class="card admin-section" id="adminPanel">
     <h3>⚙️ 管理員專區 (建立名單與重置選秀)</h3>
     <p style="font-size:0.9rem; color:#666; margin-bottom:8px;">請輸入 16 個球員名字（用逗號分開），然後點擊儲存。這會發起全新的選秀。</p>
@@ -148,29 +147,26 @@
   </div>
 
   <script>
-    // -------------------------------------------------------------
-    // 1. Admin 帳號密碼
-    // -------------------------------------------------------------
     const ADMIN_USER = "admin";
     const ADMIN_PASS = "123456";
 
     // -------------------------------------------------------------
-    // 2. Firebase 金鑰 (⚠️ 請替換為你真實的 Firebase 憑證)
+    // Firebase 金鑰（已更新為你的真實憑證）
     // -------------------------------------------------------------
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyCRyu3cnicMi3CunpiPGstUJp-uWxMCQ8c",
+      authDomain: "drafting-tournament.firebaseapp.com",
+      databaseURL: "https://drafting-tournament-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "drafting-tournament",
+      storageBucket: "drafting-tournament.firebasestorage.app",
+      messagingSenderId: "777162389397",
+      appId: "1:777162389397:web:14d469c9a832b964dfa89c",
+      measurementId: "G-MZ8VNMT80B"
     };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // 蛇形順序 (16 個位次)
     const snakeOrder = [
       "Captain_A", "Captain_B", "Captain_C", "Captain_D",
       "Captain_D", "Captain_C", "Captain_B", "Captain_A",
@@ -180,9 +176,8 @@
 
     let myRole = "Viewer";
     let isAdminLoggedIn = false;
-    let latestData = null; // 本地備份最新資料庫數據
+    let latestData = null;
 
-    // 預設 16 位球員名單
     const defaultPlayerNames = [
       "球員 1", "球員 2", "球員 3", "球員 4",
       "球員 5", "球員 6", "球員 7", "球員 8",
@@ -201,7 +196,7 @@
       } else {
         myRole = selected;
         showAdminUI(false);
-        renderUI(); // 切換身份後立即刷新介面狀態
+        renderUI();
       }
     }
 
@@ -233,7 +228,6 @@
       document.getElementById("adminPanel").style.display = show ? "block" : "none";
     }
 
-    // 重置或初始化資料庫
     function initDraft(playerList) {
       const initialPlayers = {};
       playerList.forEach((name, idx) => {
@@ -247,7 +241,6 @@
       });
     }
 
-    // Admin 自訂名單重置
     function initDraftByAdmin() {
       if (!isAdminLoggedIn) {
         alert("權限不足！必須為 Admin 登入狀態。");
@@ -266,7 +259,6 @@
       alert("成功發佈新球員名單，選秀已重置！");
     }
 
-    // 選人交易機制
     function pickPlayer(playerId) {
       const draftRef = db.ref("draft");
 
@@ -297,14 +289,12 @@
       });
     }
 
-    // 渲染 UI 介面
     function renderUI() {
       if (!latestData) return;
 
       const turnIndex = latestData.turnIndex || 0;
       const players = latestData.players || {};
 
-      // 1. 更新頂部狀態資訊
       const statusTitle = document.getElementById("statusTitle");
       const statusDesc = document.getElementById("statusDesc");
 
@@ -337,14 +327,12 @@
         statusDesc.style.color = "#2b5c8f";
       }
 
-      // 2. 清空畫面並重新繪製
       document.getElementById("playerPool").innerHTML = "";
       const teamCounts = { Captain_A: 0, Captain_B: 0, Captain_C: 0, Captain_D: 0 };
       ["Captain_A", "Captain_B", "Captain_C", "Captain_D"].forEach(c => {
         document.getElementById("team-" + c).innerHTML = "";
       });
 
-      // 3. 繪製球員按鈕與隊伍名單
       Object.values(players).forEach(player => {
         if (!player.pickedBy) {
           const btn = document.createElement("button");
@@ -352,7 +340,6 @@
           btn.innerText = player.name;
 
           const currentCaptain = snakeOrder[turnIndex];
-          // 判斷是否為當前隊長，若不是則按鈕停用 (Disabled)
           btn.disabled = (myRole !== currentCaptain || turnIndex >= snakeOrder.length);
           btn.onclick = () => pickPlayer(player.id);
 
@@ -366,18 +353,15 @@
         }
       });
 
-      // 4. 更新隊伍人數統計
       Object.keys(teamCounts).forEach(c => {
         const badge = document.getElementById("count-" + c);
         if (badge) badge.innerText = `${teamCounts[c]}/4`;
       });
     }
 
-    // 監聽 Firebase 資料庫變更
     db.ref("draft").on("value", (snapshot) => {
       const data = snapshot.val();
 
-      // 若資料庫為空，自動載入預設 16 位球員名單
       if (!data) {
         initDraft(defaultPlayerNames);
         return;

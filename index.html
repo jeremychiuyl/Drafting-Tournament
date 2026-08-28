@@ -125,6 +125,7 @@
     <div class="admin-setting-group">
       <label for="teamCountSelect" style="font-weight:bold; color:#333;">1. 選擇隊伍數量模式：</label>
       <select id="teamCountSelect" onchange="toggleAdminTeamMode()" style="margin-left: 8px;">
+        <option value="2">2 隊模式 (共 8 位球員)</option>
         <option value="3">3 隊模式 (共 12 位球員)</option>
         <option value="4" selected>4 隊模式 (共 16 位球員)</option>
       </select>
@@ -141,7 +142,7 @@
     </div>
 
     <div class="admin-setting-group">
-      <p style="font-size:0.95rem; font-weight:bold; color:#333;" id="playerInputLabel">3. 輸入 16 位球員名單 (用英文逗號隔開)：</p>
+      <p style="font-size:0.95rem; font-weight:bold; color:#333;" id="playerInputLabel">3. 輸入球員名單 (用英文逗號隔開)：</p>
       <textarea id="customPlayersInput" placeholder="球員 1, 球員 2, 球員 3, ..."></textarea>
     </div>
     
@@ -215,6 +216,12 @@
     const db = firebase.database();
 
     const snakeOrderPresets = {
+      2: [
+        "Captain_A", "Captain_B",
+        "Captain_B", "Captain_A",
+        "Captain_A", "Captain_B",
+        "Captain_B", "Captain_A"
+      ],
       3: [
         "Captain_A", "Captain_B", "Captain_C",
         "Captain_C", "Captain_B", "Captain_A",
@@ -311,7 +318,7 @@
         document.getElementById("loginModal").style.display = "none";
         document.getElementById("adminBadge").style.display = "inline";
         showAdminUI(true);
-        populateAdminInputsFromData(); // 登入後自動填入上一次設定
+        populateAdminInputsFromData();
         renderUI();
         alert("管理員登入成功！");
       } else {
@@ -334,7 +341,6 @@
       }
     }
 
-    // 自動將資料庫中最新的 Captain 名稱與球員名單填入 Admin 輸入框
     function populateAdminInputsFromData() {
       if (!latestData) return;
 
@@ -358,13 +364,20 @@
 
     function toggleAdminTeamMode() {
       const count = parseInt(document.getElementById("teamCountSelect").value);
+      const inputC = document.getElementById("nameInput-C");
       const inputD = document.getElementById("nameInput-D");
       const label = document.getElementById("playerInputLabel");
       
-      if (count === 3) {
+      if (count === 2) {
+        inputC.style.display = "none";
+        inputD.style.display = "none";
+        label.innerText = "3. 輸入 8 位球員名單 (用英文逗號隔開)：";
+      } else if (count === 3) {
+        inputC.style.display = "inline-block";
         inputD.style.display = "none";
         label.innerText = "3. 輸入 12 位球員名單 (用英文逗號隔開)：";
       } else {
+        inputC.style.display = "inline-block";
         inputD.style.display = "inline-block";
         label.innerText = "3. 輸入 16 位球員名單 (用英文逗號隔開)：";
       }
@@ -378,16 +391,21 @@
       let names = inputText.split(",").map(s => s.trim()).filter(s => s.length > 0);
       
       const targetPlayerCount = teamCount * 4;
-      if (names.length === 0) {
-        names = Array.from({ length: targetPlayerCount }, (_, i) => `球員 ${i + 1}`);
+
+      // 檢查球員數量是否符合規範
+      if (names.length !== targetPlayerCount) {
+        alert(`⚠️ 人數設定錯誤！\n\n當前選取為 ${teamCount} 隊模式，球員總數必須為 ${targetPlayerCount} 位。\n目前輸入數量：${names.length} 位。`);
+        return;
       }
 
       const captainNames = {
         Captain_A: document.getElementById("nameInput-A").value.trim() || defaultNames.Captain_A,
-        Captain_B: document.getElementById("nameInput-B").value.trim() || defaultNames.Captain_B,
-        Captain_C: document.getElementById("nameInput-C").value.trim() || defaultNames.Captain_C
+        Captain_B: document.getElementById("nameInput-B").value.trim() || defaultNames.Captain_B
       };
 
+      if (teamCount >= 3) {
+        captainNames.Captain_C = document.getElementById("nameInput-C").value.trim() || defaultNames.Captain_C;
+      }
       if (teamCount === 4) {
         captainNames.Captain_D = document.getElementById("nameInput-D").value.trim() || defaultNames.Captain_D;
       }
@@ -406,7 +424,7 @@
       });
 
       stagedPlayerId = null;
-      alert(`成功設定 ${teamCount} 隊模式並發佈新選秀！`);
+      alert(`成功設定 ${teamCount} 隊模式 (${targetPlayerCount} 人) 並發佈新選秀！`);
     }
 
     function adminRemovePlayer(playerId, captainKey) {
@@ -507,12 +525,24 @@
       const players = latestData.players || {};
       const cNames = latestData.captainNames || defaultNames;
 
+      const optC = document.getElementById("opt-Captain_C");
+      const boxC = document.getElementById("box-Captain_C");
       const optD = document.getElementById("opt-Captain_D");
       const boxD = document.getElementById("box-Captain_D");
-      if (teamCount === 3) {
+
+      if (teamCount === 2) {
+        if (optC) optC.style.display = "none";
+        if (boxC) boxC.style.display = "none";
+        if (optD) optD.style.display = "none";
+        if (boxD) boxD.style.display = "none";
+      } else if (teamCount === 3) {
+        if (optC) optC.style.display = "block";
+        if (boxC) boxC.style.display = "block";
         if (optD) optD.style.display = "none";
         if (boxD) boxD.style.display = "none";
       } else {
+        if (optC) optC.style.display = "block";
+        if (boxC) boxC.style.display = "block";
         if (optD) optD.style.display = "block";
         if (boxD) boxD.style.display = "block";
       }
@@ -617,7 +647,6 @@
       if (!data) return;
       latestData = data;
 
-      // 初次載入或 Admin 展開時自動填充歷史輸入
       if (isFirstLoad && isAdminLoggedIn) {
         populateAdminInputsFromData();
       }

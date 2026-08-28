@@ -60,7 +60,7 @@
       font-weight: bold; 
       font-size: 1rem; 
     }
-    select, input[type="text"], input[type="password"] { 
+    select, input[type="text"] { 
       padding: 10px 12px; 
       font-size: 1rem; 
       border-radius: 8px; 
@@ -172,7 +172,7 @@
       gap: 8px; 
       flex-direction: column; 
     }
-    .btn-admin, .btn-admin-danger, .btn-admin-info {
+    .btn-admin, .btn-admin-danger, .btn-admin-info, .btn-google {
       width: 100%;
       border: none;
       padding: 12px;
@@ -181,10 +181,15 @@
       font-weight: bold;
       cursor: pointer;
       color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
     .btn-admin { background: var(--admin-color); }
     .btn-admin-danger { background: #d9534f; }
     .btn-admin-info { background: #0275d8; }
+    .btn-google { background: #4285F4; }
 
     /* Layout Responsive Grid */
     .layout-grid { 
@@ -322,15 +327,12 @@
       margin-bottom: 12px; 
       color: var(--admin-color); 
     }
-    .modal-content input { 
-      width: 100%; 
-      margin-bottom: 10px; 
-    }
     .modal-btns { 
       display: flex; 
       gap: 8px; 
       justify-content: center; 
       margin-top: 12px; 
+      flex-direction: column;
     }
     
     .online-list { 
@@ -366,6 +368,7 @@
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 </head>
 <body>
@@ -438,7 +441,7 @@
     </div>
   </div>
 
-  <!-- 主區域 (響應式雙欄/單欄) -->
+  <!-- 主區域 -->
   <div class="layout-grid">
     <!-- 可選球員 Pool -->
     <div class="card pool-section">
@@ -470,15 +473,18 @@
     </div>
   </div>
 
-  <!-- Admin 登入彈窗 -->
+  <!-- Admin 登入彈窗 (Google SSO) -->
   <div class="modal" id="loginModal">
     <div class="modal-content">
       <h3>🔑 管理員登入</h3>
-      <input type="text" id="adminUser" placeholder="User Name">
-      <input type="password" id="adminPass" placeholder="Password">
+      <p style="margin-bottom: 15px; font-size: 0.9rem; color: #666;">請使用獲授權的 Google 帳號登入</p>
       <div class="modal-btns">
-        <button class="btn-admin" style="width: auto;" onclick="checkAdminLogin()">登入</button>
-        <button style="padding: 10px 16px; border:1px solid #ccc; background:#fff; border-radius:8px; cursor:pointer;" onclick="cancelAdminLogin()">取消</button>
+        <button class="btn-google" onclick="checkAdminLogin()">
+          🔍 使用 Google 帳號登入
+        </button>
+        <button style="padding: 10px 16px; border:1px solid #ccc; background:#fff; border-radius:8px; cursor:pointer;" onclick="cancelAdminLogin()">
+          取消
+        </button>
       </div>
     </div>
   </div>
@@ -497,9 +503,9 @@
   </div>
 
   <script>
-    const ADMIN_USER = "admin";
-    const ADMIN_PASS = "123456";
-
+    // -------------------------------------------------------------
+    // Firebase 配置與權限設定
+    // -------------------------------------------------------------
     const firebaseConfig = {
       apiKey: "AIzaSyCRyu3cnicMi3CunpiPGstUJp-uWxMCQ8c",
       authDomain: "drafting-tournament.firebaseapp.com",
@@ -511,8 +517,15 @@
       measurementId: "G-MZ8VNMT80B"
     };
 
+    // 授權的 Admin Gmail 列表 (請替換為你的 Google Email)
+    const ADMIN_EMAILS = [
+      "jeremychiuyl@gmail.com",
+      "admin@gmail.com"
+    ];
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    const googleProvider = new firebase.auth.GoogleAuthProvider();
 
     const snakeOrderPresets = {
       2: [
@@ -606,22 +619,35 @@
       }
     }
 
+    // Google SSO Admin Login Logic
     function checkAdminLogin() {
-      const u = document.getElementById("adminUser").value;
-      const p = document.getElementById("adminPass").value;
-      if (u === ADMIN_USER && p === ADMIN_PASS) {
-        isAdminLoggedIn = true;
-        myRole = "Admin";
-        updateSessionRole();
-        document.getElementById("loginModal").style.display = "none";
-        document.getElementById("adminBadge").style.display = "inline";
-        showAdminUI(true);
-        populateAdminInputsFromData();
-        renderUI();
-        alert("管理員登入成功！");
-      } else {
-        alert("帳號或密碼錯誤！");
-      }
+      firebase.auth().signInWithPopup(googleProvider)
+        .then((result) => {
+          const user = result.user;
+          
+          if (ADMIN_EMAILS.includes(user.email)) {
+            isAdminLoggedIn = true;
+            myRole = "Admin";
+            updateSessionRole();
+            
+            document.getElementById("loginModal").style.display = "none";
+            document.getElementById("adminBadge").style.display = "inline";
+            document.getElementById("adminBadge").innerText = `[Admin: ${user.displayName || user.email}]`;
+            
+            showAdminUI(true);
+            populateAdminInputsFromData();
+            renderUI();
+            alert(`歡迎，${user.displayName || user.email}！管理員登入成功。`);
+          } else {
+            firebase.auth().signOut();
+            alert(`⚠️ 存取被拒：${user.email} 沒有管理員權限。`);
+            cancelAdminLogin();
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          alert("Google 登入失敗或窗口被關閉");
+        });
     }
 
     function cancelAdminLogin() {

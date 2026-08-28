@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>即時蛇形選秀系統 (含 Admin 管理員權限)</title>
+  <title>即時蛇形選秀系統 (含確認機制與自訂隊名)</title>
   <style>
     :root {
       --primary-color: #2b5c8f;
       --accent-color: #e76f51;
       --admin-color: #8e24aa;
+      --confirm-color: #2a9d8f;
       --bg-color: #f4f7f6;
       --card-bg: #ffffff;
       --text-color: #2b2d42;
@@ -31,8 +32,16 @@
     .status-card h2 { font-size: 1.4rem; color: var(--primary-color); margin-bottom: 5px; }
     .status-card p { font-size: 1.1rem; color: #555; }
 
+    /* 選人確認控制列 */
+    .confirm-bar { display: none; margin-top: 15px; padding: 12px; background: #e8f5e9; border: 2px solid var(--confirm-color); border-radius: 8px; text-align: center; }
+    .confirm-bar span { font-weight: bold; font-size: 1.1rem; color: #1b5e20; margin-right: 15px; }
+    .btn-confirm { background: var(--confirm-color); color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: bold; margin-right: 8px; }
+    .btn-cancel { background: #e53935; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 1rem; cursor: pointer; }
+
+    /* 管理員專區 */
     .admin-section { border: 2px dashed var(--admin-color); background: #fdf7ff; display: none; }
-    .admin-section h3 { margin-bottom: 10px; color: var(--admin-color); display: flex; align-items: center; gap: 8px; }
+    .admin-section h3 { margin-bottom: 10px; color: var(--admin-color); }
+    .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 15px; }
     textarea { width: 100%; height: 80px; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 10px; resize: vertical; font-family: inherit; }
     .btn-admin { background: var(--admin-color); color: white; border: none; padding: 10px 20px; border-radius: 6px; font-size: 1rem; cursor: pointer; transition: opacity 0.2s; }
     .btn-admin:hover { opacity: 0.9; }
@@ -47,6 +56,13 @@
     .player-btn { background: #fff; border: 2px solid var(--primary-color); color: var(--primary-color); padding: 10px 16px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
     .player-btn:hover:not(:disabled) { background: var(--primary-color); color: white; transform: translateY(-2px); }
     .player-btn:disabled { border-color: #ccc; color: #aaa; background: #f5f5f5; cursor: not-allowed; }
+    .player-btn.staged { background: #fff3cd; border-color: #ffc107; color: #856404; font-weight: bold; animation: pulse 1.5s infinite; }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
+    }
 
     .teams-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
     .team-box { background: #fafafa; border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; }
@@ -63,7 +79,7 @@
     .modal-btns { display: flex; gap: 10px; justify-content: center; }
   </style>
 
-  <!-- Firebase SDKs (Compat 模式) -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 </head>
@@ -78,10 +94,10 @@
     <label for="roleSelect">👤 你的身份：</label>
     <select id="roleSelect" onchange="handleRoleChange()">
       <option value="Viewer">👀 觀眾 (觀看模式)</option>
-      <option value="Captain_A">🧢 隊長 A</option>
-      <option value="Captain_B">🧢 隊長 B</option>
-      <option value="Captain_C">🧢 隊長 C</option>
-      <option value="Captain_D">🧢 隊長 D</option>
+      <option value="Captain_A" id="opt-Captain_A">🧢 隊長 A</option>
+      <option value="Captain_B" id="opt-Captain_B">🧢 隊長 B</option>
+      <option value="Captain_C" id="opt-Captain_C">🧢 隊長 C</option>
+      <option value="Captain_D" id="opt-Captain_D">🧢 隊長 D</option>
       <option value="Admin">🔑 管理員 (Admin)</option>
     </select>
     <span id="adminBadge" style="display:none; color: var(--admin-color); font-weight:bold;">[已驗證 Admin]</span>
@@ -91,14 +107,31 @@
   <div class="card status-card">
     <h2 id="statusTitle">載入中...</h2>
     <p id="statusDesc">正在連接資料庫...</p>
+    
+    <!-- 隊長確認選人按鈕區塊 -->
+    <div class="confirm-bar" id="confirmBar">
+      <span>已選擇：<strong id="stagedPlayerName">--</strong></span>
+      <button class="btn-confirm" onclick="confirmPick()">✅ 確定選取並結束回合</button>
+      <button class="btn-cancel" onclick="cancelStagedPick()">🔄 重選</button>
+    </div>
   </div>
 
   <!-- 管理員控制台 -->
   <div class="card admin-section" id="adminPanel">
-    <h3>⚙️ 管理員專區 (建立名單與重置選秀)</h3>
-    <p style="font-size:0.9rem; color:#666; margin-bottom:8px;">請輸入 16 個球員名字（用逗號分開），然後點擊儲存。這會發起全新的選秀。</p>
+    <h3>⚙️ 管理員專區</h3>
+    
+    <p style="font-size:0.95rem; font-weight:bold; margin-bottom:5px; color:#333;">1. 自訂隊長/隊伍名稱：</p>
+    <div class="admin-grid">
+      <input type="text" id="nameInput-A" placeholder="Captain A 名稱 (預設: 隊長 A)">
+      <input type="text" id="nameInput-B" placeholder="Captain B 名稱 (預設: 隊長 B)">
+      <input type="text" id="nameInput-C" placeholder="Captain C 名稱 (預設: 隊長 C)">
+      <input type="text" id="nameInput-D" placeholder="Captain D 名稱 (預設: 隊長 D)">
+    </div>
+
+    <p style="font-size:0.95rem; font-weight:bold; margin-bottom:5px; color:#333;">2. 輸入 16 位球員名單 (用英文逗號隔開)：</p>
     <textarea id="customPlayersInput" placeholder="球員 1, 球員 2, 球員 3, ..."></textarea>
-    <button class="btn-admin" onclick="initDraftByAdmin()">🚀 發佈新球員名單並重設選秀</button>
+    
+    <button class="btn-admin" onclick="initDraftByAdmin()">🚀 設定隊名、發佈名單並重設選秀</button>
   </div>
 
   <!-- 主區域 -->
@@ -114,19 +147,19 @@
       <h2>📋 各隊陣容 (每隊限 4 人)</h2>
       <div class="teams-grid">
         <div class="team-box" id="box-Captain_A">
-          <h3>隊長 A <span class="badge" id="count-Captain_A">0/4</span></h3>
+          <h3><span id="title-Captain_A">隊長 A</span> <span class="badge" id="count-Captain_A">0/4</span></h3>
           <ul id="team-Captain_A"></ul>
         </div>
         <div class="team-box" id="box-Captain_B">
-          <h3>隊長 B <span class="badge" id="count-Captain_B">0/4</span></h3>
+          <h3><span id="title-Captain_B">隊長 B</span> <span class="badge" id="count-Captain_B">0/4</span></h3>
           <ul id="team-Captain_B"></ul>
         </div>
         <div class="team-box" id="box-Captain_C">
-          <h3>隊長 C <span class="badge" id="count-Captain_C">0/4</span></h3>
+          <h3><span id="title-Captain_C">隊長 C</span> <span class="badge" id="count-Captain_C">0/4</span></h3>
           <ul id="team-Captain_C"></ul>
         </div>
         <div class="team-box" id="box-Captain_D">
-          <h3>隊長 D <span class="badge" id="count-Captain_D">0/4</span></h3>
+          <h3><span id="title-Captain_D">隊長 D</span> <span class="badge" id="count-Captain_D">0/4</span></h3>
           <ul id="team-Captain_D"></ul>
         </div>
       </div>
@@ -151,7 +184,7 @@
     const ADMIN_PASS = "123456";
 
     // -------------------------------------------------------------
-    // Firebase 金鑰（已更新為你的真實憑證）
+    // Firebase 金鑰
     // -------------------------------------------------------------
     const firebaseConfig = {
       apiKey: "AIzaSyCRyu3cnicMi3CunpiPGstUJp-uWxMCQ8c",
@@ -177,6 +210,14 @@
     let myRole = "Viewer";
     let isAdminLoggedIn = false;
     let latestData = null;
+    let stagedPlayerId = null; // 本地暫選球員 ID
+
+    const defaultNames = {
+      Captain_A: "隊長 A",
+      Captain_B: "隊長 B",
+      Captain_C: "隊長 C",
+      Captain_D: "隊長 D"
+    };
 
     const defaultPlayerNames = [
       "球員 1", "球員 2", "球員 3", "球員 4",
@@ -187,6 +228,7 @@
 
     function handleRoleChange() {
       const selected = document.getElementById("roleSelect").value;
+      stagedPlayerId = null; // 切換身份時重置預選
       if (selected === "Admin") {
         if (!isAdminLoggedIn) {
           document.getElementById("loginModal").style.display = "flex";
@@ -228,38 +270,55 @@
       document.getElementById("adminPanel").style.display = show ? "block" : "none";
     }
 
-    function initDraft(playerList) {
+    // 發佈與重置
+    function initDraftByAdmin() {
+      if (!isAdminLoggedIn) return;
+
+      const inputText = document.getElementById("customPlayersInput").value.trim();
+      let names = inputText.split(",").map(s => s.trim()).filter(s => s.length > 0);
+      if (names.length === 0) names = defaultPlayerNames;
+
+      // 取得自訂隊名
+      const captainNames = {
+        Captain_A: document.getElementById("nameInput-A").value.trim() || defaultNames.Captain_A,
+        Captain_B: document.getElementById("nameInput-B").value.trim() || defaultNames.Captain_B,
+        Captain_C: document.getElementById("nameInput-C").value.trim() || defaultNames.Captain_C,
+        Captain_D: document.getElementById("nameInput-D").value.trim() || defaultNames.Captain_D
+      };
+
       const initialPlayers = {};
-      playerList.forEach((name, idx) => {
+      names.forEach((name, idx) => {
         const id = 'p' + (idx + 1);
         initialPlayers[id] = { id: id, name: name, pickedBy: null };
       });
 
       db.ref("draft").set({
         turnIndex: 0,
+        captainNames: captainNames,
         players: initialPlayers
       });
+
+      stagedPlayerId = null;
+      alert("成功設定隊名並發佈新選秀！");
     }
 
-    function initDraftByAdmin() {
-      if (!isAdminLoggedIn) {
-        alert("權限不足！必須為 Admin 登入狀態。");
-        return;
-      }
-
-      const inputText = document.getElementById("customPlayersInput").value.trim();
-      let names = inputText.split(",").map(s => s.trim()).filter(s => s.length > 0);
-
-      if (names.length === 0) {
-        alert("請先輸入球員名單！");
-        return;
-      }
-
-      initDraft(names);
-      alert("成功發佈新球員名單，選秀已重置！");
+    // 隊長暫選球員（尚未鎖定）
+    function stagePlayer(playerId) {
+      stagedPlayerId = playerId;
+      renderUI();
     }
 
-    function pickPlayer(playerId) {
+    // 取消暫選
+    function cancelStagedPick() {
+      stagedPlayerId = null;
+      renderUI();
+    }
+
+    // 確定選取並推進 Turn
+    function confirmPick() {
+      if (!stagedPlayerId) return;
+
+      const playerId = stagedPlayerId;
       const draftRef = db.ref("draft");
 
       draftRef.transaction((currentData) => {
@@ -270,9 +329,7 @@
 
         const expectedCaptain = snakeOrder[turnIndex];
 
-        if (myRole !== expectedCaptain) {
-          return; 
-        }
+        if (myRole !== expectedCaptain) return; 
 
         if (currentData.players && currentData.players[playerId] && !currentData.players[playerId].pickedBy) {
           currentData.players[playerId].pickedBy = myRole;
@@ -283,20 +340,35 @@
       }, (error, committed) => {
         if (error) {
           alert("選人失敗，請檢查 Firebase 連線設定！");
-        } else if (!committed) {
+        } else if (committed) {
+          stagedPlayerId = null;
+        } else {
           alert("動作無效：現在不是你的 Turn，或該球員已被其他人搶選！");
+          stagedPlayerId = null;
         }
       });
     }
 
+    // 渲染 UI
     function renderUI() {
       if (!latestData) return;
 
       const turnIndex = latestData.turnIndex || 0;
       const players = latestData.players || {};
+      const cNames = latestData.captainNames || defaultNames;
 
+      // 1. 更新隊名 UI
+      Object.keys(cNames).forEach(key => {
+        const titleEl = document.getElementById("title-" + key);
+        const optEl = document.getElementById("opt-" + key);
+        if (titleEl) titleEl.innerText = cNames[key];
+        if (optEl) optEl.innerText = "🧢 " + cNames[key];
+      });
+
+      // 2. 更新頂部選秀狀態
       const statusTitle = document.getElementById("statusTitle");
       const statusDesc = document.getElementById("statusDesc");
+      const confirmBar = document.getElementById("confirmBar");
 
       ["Captain_A", "Captain_B", "Captain_C", "Captain_D"].forEach(c => {
         const box = document.getElementById("box-" + c);
@@ -304,29 +376,40 @@
       });
 
       if (turnIndex < snakeOrder.length) {
-        const currentCaptain = snakeOrder[turnIndex];
+        const currentCaptainKey = snakeOrder[turnIndex];
+        const currentCaptainName = cNames[currentCaptainKey] || currentCaptainKey;
         const round = Math.floor(turnIndex / 4) + 1;
 
-        statusTitle.innerText = `Round ${round} - 輪到：${currentCaptain.replace('_', ' ')}`;
+        statusTitle.innerText = `Round ${round} - 輪到：${currentCaptainName}`;
 
-        const activeBox = document.getElementById("box-" + currentCaptain);
+        const activeBox = document.getElementById("box-" + currentCaptainKey);
         if (activeBox) activeBox.classList.add("active-turn");
 
-        if (myRole === currentCaptain) {
-          statusDesc.innerText = "👉 現在是你的回合！請點擊下方的球員進行選擇。";
+        if (myRole === currentCaptainKey) {
+          statusDesc.innerText = "👉 現在是你的回合！請點擊下方的球員進行預選。";
           statusDesc.style.color = "#e76f51";
           statusDesc.style.fontWeight = "bold";
+
+          if (stagedPlayerId && players[stagedPlayerId]) {
+            confirmBar.style.display = "block";
+            document.getElementById("stagedPlayerName").innerText = players[stagedPlayerId].name;
+          } else {
+            confirmBar.style.display = "none";
+          }
         } else {
-          statusDesc.innerText = `正在等待 ${currentCaptain.replace('_', ' ')} 選人... (你目前身份: ${myRole})`;
+          statusDesc.innerText = `正在等待 ${currentCaptainName} 選人...`;
           statusDesc.style.color = "#555";
           statusDesc.style.fontWeight = "normal";
+          confirmBar.style.display = "none";
         }
       } else {
         statusTitle.innerText = "🎉 選秀完成！";
-        statusDesc.innerText = "所有隊長已完成 4 輪選秀。";
+        statusDesc.innerText = "所有隊伍已完成 4 輪選秀。";
         statusDesc.style.color = "#2b5c8f";
+        confirmBar.style.display = "none";
       }
 
+      // 3. 繪製球員按鈕與陣容
       document.getElementById("playerPool").innerHTML = "";
       const teamCounts = { Captain_A: 0, Captain_B: 0, Captain_C: 0, Captain_D: 0 };
       ["Captain_A", "Captain_B", "Captain_C", "Captain_D"].forEach(c => {
@@ -339,10 +422,15 @@
           btn.className = "player-btn";
           btn.innerText = player.name;
 
-          const currentCaptain = snakeOrder[turnIndex];
-          btn.disabled = (myRole !== currentCaptain || turnIndex >= snakeOrder.length);
-          btn.onclick = () => pickPlayer(player.id);
+          const currentCaptainKey = snakeOrder[turnIndex];
+          btn.disabled = (myRole !== currentCaptainKey || turnIndex >= snakeOrder.length);
 
+          if (player.id === stagedPlayerId) {
+            btn.classList.add("staged");
+            btn.innerText = "⭐ " + player.name + " (已預選)";
+          }
+
+          btn.onclick = () => stagePlayer(player.id);
           document.getElementById("playerPool").appendChild(btn);
         } else {
           teamCounts[player.pickedBy] = (teamCounts[player.pickedBy] || 0) + 1;
@@ -361,12 +449,7 @@
 
     db.ref("draft").on("value", (snapshot) => {
       const data = snapshot.val();
-
-      if (!data) {
-        initDraft(defaultPlayerNames);
-        return;
-      }
-
+      if (!data) return;
       latestData = data;
       renderUI();
     });

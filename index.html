@@ -621,7 +621,7 @@
 
     // Google SSO Admin Login Logic
     function checkAdminLogin() {
-      firebase.auth().signInWithPopup(googleProvider)
+      firebase.auth().signInWithRedirect(googleProvider)
         .then((result) => {
           const user = result.user;
           

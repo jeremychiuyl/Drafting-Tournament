@@ -311,6 +311,7 @@
         document.getElementById("loginModal").style.display = "none";
         document.getElementById("adminBadge").style.display = "inline";
         showAdminUI(true);
+        populateAdminInputsFromData(); // 登入後自動填入上一次設定
         renderUI();
         alert("管理員登入成功！");
       } else {
@@ -328,6 +329,31 @@
 
     function showAdminUI(show) {
       document.getElementById("adminPanel").style.display = show ? "block" : "none";
+      if (show) {
+        populateAdminInputsFromData();
+      }
+    }
+
+    // 自動將資料庫中最新的 Captain 名稱與球員名單填入 Admin 輸入框
+    function populateAdminInputsFromData() {
+      if (!latestData) return;
+
+      if (latestData.teamCount) {
+        document.getElementById("teamCountSelect").value = latestData.teamCount;
+        toggleAdminTeamMode();
+      }
+
+      if (latestData.captainNames) {
+        if (latestData.captainNames.Captain_A) document.getElementById("nameInput-A").value = latestData.captainNames.Captain_A;
+        if (latestData.captainNames.Captain_B) document.getElementById("nameInput-B").value = latestData.captainNames.Captain_B;
+        if (latestData.captainNames.Captain_C) document.getElementById("nameInput-C").value = latestData.captainNames.Captain_C;
+        if (latestData.captainNames.Captain_D) document.getElementById("nameInput-D").value = latestData.captainNames.Captain_D;
+      }
+
+      if (latestData.players) {
+        const playerNamesArr = Object.values(latestData.players).map(p => p.name);
+        document.getElementById("customPlayersInput").value = playerNamesArr.join(", ");
+      }
     }
 
     function toggleAdminTeamMode() {
@@ -586,9 +612,16 @@
     }
 
     db.ref("draft").on("value", (snapshot) => {
+      const isFirstLoad = !latestData;
       const data = snapshot.val();
       if (!data) return;
       latestData = data;
+
+      // 初次載入或 Admin 展開時自動填充歷史輸入
+      if (isFirstLoad && isAdminLoggedIn) {
+        populateAdminInputsFromData();
+      }
+
       renderUI();
     });
 

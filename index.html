@@ -377,7 +377,7 @@
     <h1>🏆 開心選秀</h1>
   </header>
 
-  <!-- 身份選擇列 -->
+  <!-- Identity Select Bar -->
   <div class="card identity-bar">
     <label for="roleSelect">👤 身份：</label>
     <select id="roleSelect" onchange="handleRoleChange()">
@@ -391,12 +391,12 @@
     <span id="adminBadge" style="display:none; color: var(--admin-color); font-weight:bold;">[Admin]</span>
   </div>
 
-  <!-- 當前選秀狀態 (Sticky Card) -->
+  <!-- Status Card -->
   <div class="card status-card">
     <h2 id="statusTitle">載入中...</h2>
     <p id="statusDesc">正在連接資料庫...</p>
     
-    <!-- 隊長確認選人按鈕區塊 -->
+    <!-- Confirm Pick Bar -->
     <div class="confirm-bar" id="confirmBar">
       <span>已選擇：<strong id="stagedPlayerName">--</strong></span>
       <div class="confirm-btns">
@@ -406,7 +406,7 @@
     </div>
   </div>
 
-  <!-- 管理員控制台 -->
+  <!-- Admin Panel -->
   <div class="card admin-section" id="adminPanel">
     <h3>⚙️ 管理員專區</h3>
     
@@ -441,15 +441,15 @@
     </div>
   </div>
 
-  <!-- 主區域 -->
+  <!-- Main Grid -->
   <div class="layout-grid">
-    <!-- 可選球員 Pool -->
+    <!-- Player Pool -->
     <div class="card pool-section">
       <h2>🏀 候選球員池</h2>
       <div id="playerPool" class="player-buttons"></div>
     </div>
 
-    <!-- 各隊陣容 -->
+    <!-- Teams Roster -->
     <div class="card">
       <h2 class="teams-section-title">📋 各隊陣容 (每隊限 4 人)</h2>
       <div class="teams-grid">
@@ -473,7 +473,7 @@
     </div>
   </div>
 
-  <!-- Admin 登入彈窗 (Google SSO) -->
+  <!-- Admin Login Modal -->
   <div class="modal" id="loginModal">
     <div class="modal-content">
       <h3>🔑 管理員登入</h3>
@@ -489,7 +489,7 @@
     </div>
   </div>
 
-  <!-- 在線名單彈窗 -->
+  <!-- Online Presence Modal -->
   <div class="modal" id="onlineModal">
     <div class="modal-content">
       <h3>👥 在線成員狀態</h3>
@@ -504,7 +504,7 @@
 
   <script>
     // -------------------------------------------------------------
-    // Firebase 配置與權限設定
+    // Firebase Configuration & Setup
     // -------------------------------------------------------------
     const firebaseConfig = {
       apiKey: "AIzaSyCRyu3cnicMi3CunpiPGstUJp-uWxMCQ8c",
@@ -517,9 +517,9 @@
       measurementId: "G-MZ8VNMT80B"
     };
 
-    // 授權的 Admin Gmail 列表 (請替換為你的 Google Email)
+    // Authorized Admin Email List
     const ADMIN_EMAILS = [
-      "jeremychiuyl@gmail.com",
+      "yourname@gmail.com",
       "admin@gmail.com"
     ];
 
@@ -560,6 +560,47 @@
       Captain_C: "隊長 C",
       Captain_D: "隊長 D"
     };
+
+    // -------------------------------------------------------------
+    // Google Redirect Auth Result Handler
+    // -------------------------------------------------------------
+    firebase.auth().getRedirectResult()
+      .then((result) => {
+        if (result && result.user) {
+          verifyAdminUser(result.user);
+        } else {
+          // Check if user was already signed in previously
+          const currentUser = firebase.auth().currentUser;
+          if (currentUser) {
+            verifyAdminUser(currentUser);
+          }
+        }
+      })
+      .catch((error) => {
+        console.error("Auth Error:", error);
+        alert(`登入發生錯誤: ${error.message}`);
+      });
+
+    function verifyAdminUser(user) {
+      if (ADMIN_EMAILS.includes(user.email)) {
+        isAdminLoggedIn = true;
+        myRole = "Admin";
+        document.getElementById("roleSelect").value = "Admin";
+        updateSessionRole();
+        
+        document.getElementById("loginModal").style.display = "none";
+        document.getElementById("adminBadge").style.display = "inline";
+        document.getElementById("adminBadge").innerText = `[Admin: ${user.displayName || user.email}]`;
+        
+        showAdminUI(true);
+        populateAdminInputsFromData();
+        renderUI();
+      } else {
+        firebase.auth().signOut();
+        alert(`⚠️ 存取被拒：${user.email} 沒有管理員權限。`);
+        cancelAdminLogin();
+      }
+    }
 
     function initVisitorPresence() {
       const connectedRef = db.ref(".info/connected");
@@ -619,35 +660,9 @@
       }
     }
 
-    // Google SSO Admin Login Logic
+    // Google Redirect Login Trigger
     function checkAdminLogin() {
-      firebase.auth().signInWithRedirect(googleProvider)
-        .then((result) => {
-          const user = result.user;
-          
-          if (ADMIN_EMAILS.includes(user.email)) {
-            isAdminLoggedIn = true;
-            myRole = "Admin";
-            updateSessionRole();
-            
-            document.getElementById("loginModal").style.display = "none";
-            document.getElementById("adminBadge").style.display = "inline";
-            document.getElementById("adminBadge").innerText = `[Admin: ${user.displayName || user.email}]`;
-            
-            showAdminUI(true);
-            populateAdminInputsFromData();
-            renderUI();
-            alert(`歡迎，${user.displayName || user.email}！管理員登入成功。`);
-          } else {
-            firebase.auth().signOut();
-            alert(`⚠️ 存取被拒：${user.email} 沒有管理員權限。`);
-            cancelAdminLogin();
-          }
-        })
-        .catch((error) => {
-          console.error(error);
-          alert("Google 登入失敗或窗口被關閉");
-        });
+      firebase.auth().signInWithRedirect(googleProvider);
     }
 
     function cancelAdminLogin() {

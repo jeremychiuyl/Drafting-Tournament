@@ -60,7 +60,7 @@
       font-weight: bold; 
       font-size: 1rem; 
     }
-    select, input[type="text"] { 
+    select, input[type="text"], input[type="password"] { 
       padding: 10px 12px; 
       font-size: 1rem; 
       border-radius: 8px; 
@@ -172,7 +172,7 @@
       gap: 8px; 
       flex-direction: column; 
     }
-    .btn-admin, .btn-admin-danger, .btn-admin-info, .btn-google {
+    .btn-admin, .btn-admin-danger, .btn-admin-info {
       width: 100%;
       border: none;
       padding: 12px;
@@ -189,7 +189,6 @@
     .btn-admin { background: var(--admin-color); }
     .btn-admin-danger { background: #d9534f; }
     .btn-admin-info { background: #0275d8; }
-    .btn-google { background: #4285F4; }
 
     /* Layout Responsive Grid */
     .layout-grid { 
@@ -368,7 +367,6 @@
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 </head>
 <body>
@@ -473,18 +471,15 @@
     </div>
   </div>
 
-  <!-- Admin Login Modal -->
+  <!-- Simple Admin Password Modal -->
   <div class="modal" id="loginModal">
     <div class="modal-content">
-      <h3>🔑 管理員登入</h3>
-      <p style="margin-bottom: 15px; font-size: 0.9rem; color: #666;">請使用獲授權的 Google 帳號登入</p>
+      <h3>🔑 管理員驗證</h3>
+      <p style="margin-bottom: 12px; font-size: 0.9rem; color: #666;">請輸入管理員密碼：</p>
+      <input type="password" id="adminPasswordInput" placeholder="密碼" style="margin-bottom: 12px;" onkeydown="if(event.key==='Enter') checkAdminPassword()">
       <div class="modal-btns">
-        <button class="btn-google" onclick="checkAdminLogin()">
-          🔍 使用 Google 帳號登入
-        </button>
-        <button style="padding: 10px 16px; border:1px solid #ccc; background:#fff; border-radius:8px; cursor:pointer;" onclick="cancelAdminLogin()">
-          取消
-        </button>
+        <button class="btn-admin" onclick="checkAdminPassword()">登入</button>
+        <button style="padding: 10px 16px; border:1px solid #ccc; background:#fff; border-radius:8px; cursor:pointer;" onclick="cancelAdminLogin()">取消</button>
       </div>
     </div>
   </div>
@@ -517,15 +512,10 @@
       measurementId: "G-MZ8VNMT80B"
     };
 
-    // Authorized Admin Email List
-    const ADMIN_EMAILS = [
-      "yourname@gmail.com",
-      "admin@gmail.com"
-    ];
+    const ADMIN_PASSWORD = "admin20141029";
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const googleProvider = new firebase.auth.GoogleAuthProvider();
 
     const snakeOrderPresets = {
       2: [
@@ -561,47 +551,6 @@
       Captain_D: "隊長 D"
     };
 
-    // -------------------------------------------------------------
-    // Google Redirect Auth Result Handler
-    // -------------------------------------------------------------
-    firebase.auth().getRedirectResult()
-      .then((result) => {
-        if (result && result.user) {
-          verifyAdminUser(result.user);
-        } else {
-          // Check if user was already signed in previously
-          const currentUser = firebase.auth().currentUser;
-          if (currentUser) {
-            verifyAdminUser(currentUser);
-          }
-        }
-      })
-      .catch((error) => {
-        console.error("Auth Error:", error);
-        alert(`登入發生錯誤: ${error.message}`);
-      });
-
-    function verifyAdminUser(user) {
-      if (ADMIN_EMAILS.includes(user.email)) {
-        isAdminLoggedIn = true;
-        myRole = "Admin";
-        document.getElementById("roleSelect").value = "Admin";
-        updateSessionRole();
-        
-        document.getElementById("loginModal").style.display = "none";
-        document.getElementById("adminBadge").style.display = "inline";
-        document.getElementById("adminBadge").innerText = `[Admin: ${user.displayName || user.email}]`;
-        
-        showAdminUI(true);
-        populateAdminInputsFromData();
-        renderUI();
-      } else {
-        firebase.auth().signOut();
-        alert(`⚠️ 存取被拒：${user.email} 沒有管理員權限。`);
-        cancelAdminLogin();
-      }
-    }
-
     function initVisitorPresence() {
       const connectedRef = db.ref(".info/connected");
       connectedRef.on("value", (snap) => {
@@ -630,7 +579,9 @@
 
       if (selected === "Admin") {
         if (!isAdminLoggedIn) {
+          document.getElementById("adminPasswordInput").value = "";
           document.getElementById("loginModal").style.display = "flex";
+          document.getElementById("adminPasswordInput").focus();
         } else {
           myRole = "Admin";
           updateSessionRole();
@@ -660,9 +611,26 @@
       }
     }
 
-    // Google Redirect Login Trigger
-    function checkAdminLogin() {
-      firebase.auth().signInWithRedirect(googleProvider);
+    // Password Check Function
+    function checkAdminPassword() {
+      const inputPw = document.getElementById("adminPasswordInput").value.trim();
+
+      if (inputPw === ADMIN_PASSWORD) {
+        isAdminLoggedIn = true;
+        myRole = "Admin";
+        updateSessionRole();
+        
+        document.getElementById("loginModal").style.display = "none";
+        document.getElementById("adminBadge").style.display = "inline";
+        
+        showAdminUI(true);
+        populateAdminInputsFromData();
+        renderUI();
+      } else {
+        alert("⚠️ 密碼錯誤，請重新輸入！");
+        document.getElementById("adminPasswordInput").value = "";
+        document.getElementById("adminPasswordInput").focus();
+      }
     }
 
     function cancelAdminLogin() {

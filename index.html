@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>即時蛇形選秀系統 (含撤銷與身份鎖定)</title>
+  <title>開心選秀</title>
   <style>
     :root {
       --primary-color: #2b5c8f;
@@ -88,7 +88,7 @@
 <body>
 
   <header>
-    <h1>🏆 蛇形選秀系統 (Snake Draft)</h1>
+    <h1>🏆 開心選秀</h1>
   </header>
 
   <!-- 身份選擇列 -->
@@ -230,7 +230,7 @@
     };
 
     let myRole = "Viewer";
-    let activeRoleRef = null; // 當前佔用的角色 Database Reference
+    let activeRoleRef = null;
     let isAdminLoggedIn = false;
     let latestData = null;
     let stagedPlayerId = null; 
@@ -242,12 +242,10 @@
       Captain_D: "隊長 D"
     };
 
-    // 切換身份邏輯（含單一登入鎖定）
     function handleRoleChange() {
       const selected = document.getElementById("roleSelect").value;
       stagedPlayerId = null;
 
-      // 若原先有佔用隊長位置，先釋放
       releaseRolePresence();
 
       if (selected === "Admin") {
@@ -257,7 +255,6 @@
           showAdminUI(true);
         }
       } else if (selected.startsWith("Captain_")) {
-        // 嘗試佔用隊長位置
         claimRolePresence(selected, (success) => {
           if (success) {
             myRole = selected;
@@ -278,19 +275,18 @@
       }
     }
 
-    // 嘗試鎖定隊長身份（每隊限一人進入）
     function claimRolePresence(role, callback) {
       const presenceRef = db.ref(`presence/${role}`);
       presenceRef.transaction((currentValue) => {
         if (currentValue === null || currentValue === false) {
-          return true; // 沒人佔用，成功佔據
+          return true;
         } else {
-          return; // 已有人，取消
+          return;
         }
       }, (error, committed) => {
         if (committed) {
           activeRoleRef = presenceRef;
-          presenceRef.onDisconnect().remove(); // 斷線自動釋放
+          presenceRef.onDisconnect().remove();
           callback(true);
         } else {
           callback(false);
@@ -298,7 +294,6 @@
       });
     }
 
-    // 釋放隊長身份
     function releaseRolePresence() {
       if (activeRoleRef) {
         activeRoleRef.remove();
@@ -388,7 +383,6 @@
       alert(`成功設定 ${teamCount} 隊模式並發佈新選秀！`);
     }
 
-    // Admin 撤銷選人功能 (球員回候選池，回合重設回該隊長)
     function adminRemovePlayer(playerId, captainKey) {
       if (!isAdminLoggedIn) return;
       if (!confirm("確定要撤銷此選擇嗎？系統將會將回合重新交回給該隊長！")) return;
@@ -400,19 +394,15 @@
         const teamCount = currentData.teamCount || 4;
         const currentSnakeOrder = snakeOrderPresets[teamCount];
 
-        // 1. 將球員歸還
         if (currentData.players && currentData.players[playerId]) {
           currentData.players[playerId].pickedBy = null;
         }
 
-        // 2. 尋找該隊長在目前順序中「最接近的第一個未完成 Turn」
-        // 計算該隊長目前已經擁有的球員數量 (撤銷後)
         let captainPlayerCount = 0;
         Object.values(currentData.players).forEach(p => {
           if (p.pickedBy === captainKey) captainPlayerCount++;
         });
 
-        // 在蛇形順序中找到該隊長第 (captainPlayerCount + 1) 次出現的 Turn 索引
         let count = 0;
         let newTurnIndex = 0;
         for (let i = 0; i < currentSnakeOrder.length; i++) {
@@ -551,7 +541,6 @@
         confirmBar.style.display = "none";
       }
 
-      // 繪製球員按鈕與陣容 (含 Admin 撤銷按鈕)
       document.getElementById("playerPool").innerHTML = "";
       const teamCounts = { Captain_A: 0, Captain_B: 0, Captain_C: 0, Captain_D: 0 };
       ["Captain_A", "Captain_B", "Captain_C", "Captain_D"].forEach(c => {

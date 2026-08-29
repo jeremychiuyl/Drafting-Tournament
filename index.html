@@ -14,6 +14,21 @@
       --card-bg: #ffffff;
       --text-color: #2b2d42;
       --border-color: #e0e0e0;
+      --input-bg: #ffffff;
+      --box-bg: #fafafa;
+    }
+
+    [data-theme="dark"] {
+      --primary-color: #4ea8de;
+      --accent-color: #f4a261;
+      --admin-color: #ba68c8;
+      --confirm-color: #2a9d8f;
+      --bg-color: #121212;
+      --card-bg: #1e1e1e;
+      --text-color: #e0e0e0;
+      --border-color: #333333;
+      --input-bg: #2d2d2d;
+      --box-bg: #252525;
     }
 
     * { 
@@ -29,10 +44,13 @@
       color: var(--text-color); 
       padding: 12px; 
       line-height: 1.4; 
+      transition: background 0.3s, color 0.3s;
     }
 
     header { 
-      text-align: center; 
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 12px; 
     }
     h1 { 
@@ -40,11 +58,26 @@
       font-size: 1.6rem; 
     }
 
+    /* Theme Selector Top Right */
+    .theme-selector {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .theme-selector select {
+      padding: 6px 8px;
+      font-size: 0.85rem;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: var(--input-bg);
+      color: var(--text-color);
+    }
+
     .card { 
       background: var(--card-bg); 
       border-radius: 12px; 
       padding: 16px; 
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
       margin-bottom: 16px; 
     }
 
@@ -66,12 +99,13 @@
       border-radius: 8px; 
       border: 1px solid var(--border-color); 
       outline: none; 
-      background: white; 
+      background: var(--input-bg); 
+      color: var(--text-color);
       width: 100%;
       max-width: 300px;
     }
 
-    /* Sticky Status Card for Easy Mobile Visibility */
+    /* Sticky Status Card */
     .status-card { 
       text-align: center; 
       border-left: 6px solid var(--primary-color); 
@@ -86,14 +120,15 @@
     }
     .status-card p { 
       font-size: 0.95rem; 
-      color: #555; 
+      color: var(--text-color); 
+      opacity: 0.8;
     }
 
     .confirm-bar { 
       display: none; 
       margin-top: 12px; 
       padding: 12px; 
-      background: #e8f5e9; 
+      background: rgba(42, 157, 143, 0.15); 
       border: 2px solid var(--confirm-color); 
       border-radius: 8px; 
       text-align: center; 
@@ -102,7 +137,7 @@
       display: block;
       font-weight: bold; 
       font-size: 1rem; 
-      color: #1b5e20; 
+      color: var(--confirm-color); 
       margin-bottom: 8px;
     }
     .confirm-btns {
@@ -135,7 +170,7 @@
     /* Admin Section */
     .admin-section { 
       border: 2px dashed var(--admin-color); 
-      background: #fdf7ff; 
+      background: rgba(142, 36, 170, 0.05); 
       display: none; 
     }
     .admin-section h3 { 
@@ -160,6 +195,8 @@
       padding: 10px; 
       border-radius: 8px; 
       border: 1px solid var(--border-color); 
+      background: var(--input-bg);
+      color: var(--text-color);
       margin-top: 6px; 
       margin-bottom: 10px; 
       resize: vertical; 
@@ -170,14 +207,14 @@
     .admin-btn-group { 
       display: flex; 
       gap: 8px; 
-      flex-direction: column; 
+      flex-wrap: wrap;
     }
-    .btn-admin, .btn-admin-danger, .btn-admin-info {
-      width: 100%;
+    .btn-admin, .btn-admin-danger, .btn-admin-info, .btn-admin-warn {
+      flex: 1 1 calc(50% - 8px);
       border: none;
       padding: 12px;
       border-radius: 8px;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       font-weight: bold;
       cursor: pointer;
       color: white;
@@ -189,6 +226,17 @@
     .btn-admin { background: var(--admin-color); }
     .btn-admin-danger { background: #d9534f; }
     .btn-admin-info { background: #0275d8; }
+    .btn-admin-warn { background: #f0ad4e; }
+
+    .proxy-select-box {
+      background: rgba(142, 36, 170, 0.1);
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
     /* Layout Responsive Grid */
     .layout-grid { 
@@ -210,7 +258,7 @@
       gap: 8px; 
     }
     .player-btn { 
-      background: #fff; 
+      background: var(--card-bg); 
       border: 2px solid var(--primary-color); 
       color: var(--primary-color); 
       padding: 12px 8px; 
@@ -223,9 +271,9 @@
       word-break: break-word;
     }
     .player-btn:disabled { 
-      border-color: #ccc; 
-      color: #aaa; 
-      background: #f5f5f5; 
+      border-color: var(--border-color); 
+      color: #888; 
+      background: var(--box-bg); 
       cursor: not-allowed; 
     }
     .player-btn.staged { 
@@ -248,14 +296,14 @@
       gap: 10px; 
     }
     .team-box { 
-      background: #fafafa; 
+      background: var(--box-bg); 
       border: 1px solid var(--border-color); 
       border-radius: 8px; 
       padding: 12px; 
     }
     .team-box.active-turn { 
       border: 2px solid var(--accent-color); 
-      background: #fffdfa; 
+      box-shadow: 0 0 8px rgba(231, 111, 81, 0.3);
     }
     .team-box h3 { 
       font-size: 1rem; 
@@ -270,8 +318,8 @@
     }
     .team-box li { 
       padding: 6px 8px; 
-      background: white; 
-      border: 1px solid #eee; 
+      background: var(--card-bg); 
+      border: 1px solid var(--border-color); 
       border-radius: 4px; 
       margin-bottom: 4px; 
       font-size: 0.9rem; 
@@ -299,6 +347,11 @@
       padding: 2px 6px; 
       border-radius: 10px; 
     }
+
+    .shuffle-btn-container {
+      margin-top: 12px;
+      text-align: center;
+    }
     
     /* Modals Responsive */
     .modal { 
@@ -308,18 +361,19 @@
       left: 0; 
       width: 100%; 
       height: 100%; 
-      background: rgba(0,0,0,0.5); 
+      background: rgba(0,0,0,0.6); 
       justify-content: center; 
       align-items: center; 
       z-index: 100; 
       padding: 16px;
     }
     .modal-content { 
-      background: white; 
+      background: var(--card-bg); 
+      color: var(--text-color);
       padding: 20px; 
       border-radius: 12px; 
       width: 100%;
-      max-width: 360px; 
+      max-width: 400px; 
       text-align: center; 
     }
     .modal-content h3 { 
@@ -336,8 +390,8 @@
     
     .online-list { 
       text-align: left; 
-      background: #f9f9f9; 
-      border: 1px solid #eee; 
+      background: var(--box-bg); 
+      border: 1px solid var(--border-color); 
       padding: 10px; 
       border-radius: 6px; 
       margin-top: 10px; 
@@ -347,7 +401,7 @@
     }
     .online-list li { 
       padding: 6px 0; 
-      border-bottom: 1px solid #eee; 
+      border-bottom: 1px solid var(--border-color); 
       font-size: 0.9rem; 
     }
 
@@ -356,8 +410,7 @@
       body { padding: 20px; }
       h1 { font-size: 2rem; }
       .layout-grid { grid-template-columns: 1.2fr 1.8fr; }
-      .admin-btn-group { flex-direction: row; }
-      .btn-admin, .btn-admin-danger, .btn-admin-info { flex: 1; }
+      .btn-admin, .btn-admin-danger, .btn-admin-info, .btn-admin-warn { flex: 1; }
       .confirm-bar span { display: inline; margin-right: 15px; margin-bottom: 0; }
       .confirm-btns { display: inline-flex; width: auto; }
       .btn-confirm, .btn-cancel { flex: initial; }
@@ -373,6 +426,14 @@
 
   <header>
     <h1>🏆 開心選秀</h1>
+    <div class="theme-selector">
+      <label for="themeSelect">🎨</label>
+      <select id="themeSelect" onchange="changeTheme(this.value)">
+        <option value="system">系統預設</option>
+        <option value="light">淺色模式</option>
+        <option value="dark">深色模式</option>
+      </select>
+    </div>
   </header>
 
   <!-- Identity Select Bar -->
@@ -408,8 +469,20 @@
   <div class="card admin-section" id="adminPanel">
     <h3>⚙️ 管理員專區</h3>
     
+    <!-- Admin Proxy Feature -->
+    <div class="proxy-select-box">
+      <label for="adminProxySelect" style="font-weight:bold; color:var(--admin-color);">🛠️ 代理隊長選人：</label>
+      <select id="adminProxySelect" onchange="handleAdminProxyChange()">
+        <option value="None">-- 不代理 (預設) --</option>
+        <option value="Captain_A" id="proxy-opt-Captain_A">代理 隊長 A</option>
+        <option value="Captain_B" id="proxy-opt-Captain_B">代理 隊長 B</option>
+        <option value="Captain_C" id="proxy-opt-Captain_C">代理 隊長 C</option>
+        <option value="Captain_D" id="proxy-opt-Captain_D">代理 隊長 D</option>
+      </select>
+    </div>
+
     <div class="admin-setting-group">
-      <label for="teamCountSelect" style="font-weight:bold; color:#333; display:block; margin-bottom: 4px;">1. 隊伍數量模式：</label>
+      <label for="teamCountSelect" style="font-weight:bold; display:block; margin-bottom: 4px;">1. 隊伍數量模式：</label>
       <select id="teamCountSelect" onchange="toggleAdminTeamMode()">
         <option value="2">2 隊模式 (共 8 位球員)</option>
         <option value="3">3 隊模式 (共 12 位球員)</option>
@@ -418,7 +491,7 @@
     </div>
 
     <div class="admin-setting-group">
-      <p style="font-size:0.95rem; font-weight:bold; color:#333;">2. 自訂隊長/隊伍名稱：</p>
+      <p style="font-size:0.95rem; font-weight:bold;">2. 自訂隊長/隊伍名稱：</p>
       <div class="admin-grid">
         <input type="text" id="nameInput-A" placeholder="Captain A (預設: 隊長 A)">
         <input type="text" id="nameInput-B" placeholder="Captain B (預設: 隊長 B)">
@@ -428,13 +501,14 @@
     </div>
 
     <div class="admin-setting-group">
-      <p style="font-size:0.95rem; font-weight:bold; color:#333;" id="playerInputLabel">3. 輸入球員名單 (用英文逗號隔開)：</p>
+      <p style="font-size:0.95rem; font-weight:bold;" id="playerInputLabel">3. 球員名單 (用英文逗號隔開)：</p>
       <textarea id="customPlayersInput" placeholder="球員 1, 球員 2, 球員 3, ..."></textarea>
     </div>
     
     <div class="admin-btn-group">
-      <button class="btn-admin" onclick="initDraftByAdmin()">🚀 發佈新選秀</button>
-      <button class="btn-admin-danger" onclick="clearAllSelections()">🧹 清空選人</button>
+      <button class="btn-admin-warn" onclick="updatePlayerListSafe()">📝 更新球員名單 (保留進度)</button>
+      <button class="btn-admin" onclick="initDraftByAdmin()">🚀 完全重置並發佈新選秀</button>
+      <button class="btn-admin-danger" onclick="clearAllSelections()">🧹 清空選人 (保留名單)</button>
       <button class="btn-admin-info" onclick="checkOnlineUsers()">👥 查看在線狀態</button>
     </div>
   </div>
@@ -468,6 +542,11 @@
           <ul id="team-Captain_D"></ul>
         </div>
       </div>
+      
+      <!-- Randomize Order Button post completion -->
+      <div class="shuffle-btn-container" id="shuffleContainer" style="display:none;">
+        <button class="btn-admin-warn" style="width: auto; padding: 8px 16px;" onclick="shuffleTeamOrders()">🎲 隨機打亂隊伍成員順序</button>
+      </div>
     </div>
   </div>
 
@@ -475,11 +554,23 @@
   <div class="modal" id="loginModal">
     <div class="modal-content">
       <h3>🔑 管理員驗證</h3>
-      <p style="margin-bottom: 12px; font-size: 0.9rem; color: #666;">請輸入管理員密碼：</p>
+      <p style="margin-bottom: 12px; font-size: 0.9rem; color: #888;">請輸入管理員密碼：</p>
       <input type="password" id="adminPasswordInput" placeholder="密碼" style="margin-bottom: 12px;" onkeydown="if(event.key==='Enter') checkAdminPassword()">
       <div class="modal-btns">
         <button class="btn-admin" onclick="checkAdminPassword()">登入</button>
-        <button style="padding: 10px 16px; border:1px solid #ccc; background:#fff; border-radius:8px; cursor:pointer;" onclick="cancelAdminLogin()">取消</button>
+        <button style="padding: 10px 16px; border:1px solid var(--border-color); background:var(--card-bg); color:var(--text-color); border-radius:8px; cursor:pointer;" onclick="cancelAdminLogin()">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Re-pick / Replace Confirmation Modal -->
+  <div class="modal" id="replaceModal">
+    <div class="modal-content">
+      <h3>⚠️ 替換已挑選球員</h3>
+      <p id="replaceModalText" style="margin-bottom: 16px; font-size: 0.95rem; line-height: 1.5;"></p>
+      <div class="modal-btns">
+        <button class="btn-admin" onclick="resolvePlayerReplace('direct')">直接替換隊伍內球員</button>
+        <button class="btn-admin-warn" onclick="resolvePlayerReplace('repick')">退回球員池 (由隊長重新挑選)</button>
       </div>
     </div>
   </div>
@@ -498,9 +589,7 @@
   </div>
 
   <script>
-    // -------------------------------------------------------------
-    // Firebase Configuration & Setup
-    // -------------------------------------------------------------
+    // Firebase Setup
     const firebaseConfig = {
       apiKey: "AIzaSyCRyu3cnicMi3CunpiPGstUJp-uWxMCQ8c",
       authDomain: "drafting-tournament.firebaseapp.com",
@@ -518,46 +607,55 @@
     const db = firebase.database();
 
     const snakeOrderPresets = {
-      2: [
-        "Captain_A", "Captain_B",
-        "Captain_B", "Captain_A",
-        "Captain_A", "Captain_B",
-        "Captain_B", "Captain_A"
-      ],
-      3: [
-        "Captain_A", "Captain_B", "Captain_C",
-        "Captain_C", "Captain_B", "Captain_A",
-        "Captain_A", "Captain_B", "Captain_C",
-        "Captain_C", "Captain_B", "Captain_A"
-      ],
-      4: [
-        "Captain_A", "Captain_B", "Captain_C", "Captain_D",
-        "Captain_D", "Captain_C", "Captain_B", "Captain_A",
-        "Captain_A", "Captain_B", "Captain_C", "Captain_D",
-        "Captain_D", "Captain_C", "Captain_B", "Captain_A"
-      ]
+      2: ["Captain_A", "Captain_B", "Captain_B", "Captain_A", "Captain_A", "Captain_B", "Captain_B", "Captain_A"],
+      3: ["Captain_A", "Captain_B", "Captain_C", "Captain_C", "Captain_B", "Captain_A", "Captain_A", "Captain_B", "Captain_C", "Captain_C", "Captain_B", "Captain_A"],
+      4: ["Captain_A", "Captain_B", "Captain_C", "Captain_D", "Captain_D", "Captain_C", "Captain_B", "Captain_A", "Captain_A", "Captain_B", "Captain_C", "Captain_D", "Captain_D", "Captain_C", "Captain_B", "Captain_A"]
     };
 
     let myRole = "Viewer";
+    let adminProxyRole = "None"; // Admin proxy role option
     let isAdminLoggedIn = false;
     let latestData = null;
     let stagedPlayerId = null; 
     let mySessionRef = null;
+    let pendingReplaceCallback = null;
 
-    const defaultNames = {
-      Captain_A: "隊長 A",
-      Captain_B: "隊長 B",
-      Captain_C: "隊長 C",
-      Captain_D: "隊長 D"
-    };
+    const defaultNames = { Captain_A: "隊長 A", Captain_B: "隊長 B", Captain_C: "隊長 C", Captain_D: "隊長 D" };
+
+    // Theme Management
+    function changeTheme(theme) {
+      localStorage.setItem("appTheme", theme);
+      if (theme === "system") {
+        document.documentElement.removeAttribute("data-theme");
+      } else {
+        document.documentElement.setAttribute("data-theme", theme);
+      }
+    }
+
+    function initTheme() {
+      const saved = localStorage.getItem("appTheme") || "system";
+      document.getElementById("themeSelect").value = saved;
+      changeTheme(saved);
+    }
+
+    function getEffectiveRole() {
+      if (myRole === "Admin" && adminProxyRole !== "None") {
+        return adminProxyRole;
+      }
+      return myRole;
+    }
+
+    function handleAdminProxyChange() {
+      adminProxyRole = document.getElementById("adminProxySelect").value;
+      stagedPlayerId = null;
+      renderUI();
+    }
 
     function initVisitorPresence() {
       const connectedRef = db.ref(".info/connected");
       connectedRef.on("value", (snap) => {
         if (snap.val() === true) {
-          if (!mySessionRef) {
-            mySessionRef = db.ref("presence/sessions").push();
-          }
+          if (!mySessionRef) mySessionRef = db.ref("presence/sessions").push();
           updateSessionRole();
           mySessionRef.onDisconnect().remove();
         }
@@ -566,10 +664,7 @@
 
     function updateSessionRole() {
       if (mySessionRef) {
-        mySessionRef.set({
-          role: myRole,
-          lastSeen: firebase.database.ServerValue.TIMESTAMP
-        });
+        mySessionRef.set({ role: myRole, lastSeen: firebase.database.ServerValue.TIMESTAMP });
       }
     }
 
@@ -611,18 +706,14 @@
       }
     }
 
-    // Password Check Function
     function checkAdminPassword() {
       const inputPw = document.getElementById("adminPasswordInput").value.trim();
-
       if (inputPw === ADMIN_PASSWORD) {
         isAdminLoggedIn = true;
         myRole = "Admin";
         updateSessionRole();
-        
         document.getElementById("loginModal").style.display = "none";
         document.getElementById("adminBadge").style.display = "inline";
-        
         showAdminUI(true);
         populateAdminInputsFromData();
         renderUI();
@@ -644,26 +735,21 @@
 
     function showAdminUI(show) {
       document.getElementById("adminPanel").style.display = show ? "block" : "none";
-      if (show) {
-        populateAdminInputsFromData();
-      }
+      if (show) populateAdminInputsFromData();
     }
 
     function populateAdminInputsFromData() {
       if (!latestData) return;
-
       if (latestData.teamCount) {
         document.getElementById("teamCountSelect").value = latestData.teamCount;
         toggleAdminTeamMode();
       }
-
       if (latestData.captainNames) {
         if (latestData.captainNames.Captain_A) document.getElementById("nameInput-A").value = latestData.captainNames.Captain_A;
         if (latestData.captainNames.Captain_B) document.getElementById("nameInput-B").value = latestData.captainNames.Captain_B;
         if (latestData.captainNames.Captain_C) document.getElementById("nameInput-C").value = latestData.captainNames.Captain_C;
         if (latestData.captainNames.Captain_D) document.getElementById("nameInput-D").value = latestData.captainNames.Captain_D;
       }
-
       if (latestData.players) {
         const playerNamesArr = Object.values(latestData.players).map(p => p.name);
         document.getElementById("customPlayersInput").value = playerNamesArr.join(", ");
@@ -674,34 +760,143 @@
       const count = parseInt(document.getElementById("teamCountSelect").value);
       const inputC = document.getElementById("nameInput-C");
       const inputD = document.getElementById("nameInput-D");
+      const proxyOptC = document.getElementById("proxy-opt-Captain_C");
+      const proxyOptD = document.getElementById("proxy-opt-Captain_D");
       const label = document.getElementById("playerInputLabel");
       
       if (count === 2) {
-        inputC.style.display = "none";
-        inputD.style.display = "none";
-        label.innerText = "3. 輸入 8 位球員名單 (用英文逗號隔開)：";
+        inputC.style.display = "none"; inputD.style.display = "none";
+        proxyOptC.style.display = "none"; proxyOptD.style.display = "none";
+        label.innerText = "3. 球員名單 (8 位，英文逗號隔開)：";
       } else if (count === 3) {
-        inputC.style.display = "block";
-        inputD.style.display = "none";
-        label.innerText = "3. 輸入 12 位球員名單 (用英文逗號隔開)：";
+        inputC.style.display = "block"; inputD.style.display = "none";
+        proxyOptC.style.display = "block"; proxyOptD.style.display = "none";
+        label.innerText = "3. 球員名單 (12 位，英文逗號隔開)：";
       } else {
-        inputC.style.display = "block";
-        inputD.style.display = "block";
-        label.innerText = "3. 輸入 16 位球員名單 (用英文逗號隔開)：";
+        inputC.style.display = "block"; inputD.style.display = "block";
+        proxyOptC.style.display = "block"; proxyOptD.style.display = "block";
+        label.innerText = "3. 球員名單 (16 位，英文逗號隔開)：";
       }
+    }
+
+    // Safe Update Player List without destroying draft progress
+    function updatePlayerListSafe() {
+      if (!isAdminLoggedIn || !latestData) return;
+
+      const teamCount = parseInt(document.getElementById("teamCountSelect").value);
+      const inputText = document.getElementById("customPlayersInput").value.trim();
+      let newNames = inputText.split(",").map(s => s.trim()).filter(s => s.length > 0);
+      const targetCount = teamCount * 4;
+
+      if (newNames.length !== targetCount) {
+        alert(`⚠️ 人數不符合！${teamCount} 隊模式需要 ${targetCount} 位球員（目前輸入 ${newNames.length} 位）。`);
+        return;
+      }
+
+      const existingPlayers = Object.values(latestData.players || {});
+      let changedPickedPlayer = null;
+
+      // Detect if an already-picked player name changed
+      existingPlayers.forEach((p, idx) => {
+        if (p.pickedBy && newNames[idx] && p.name !== newNames[idx]) {
+          changedPickedPlayer = {
+            id: p.id,
+            oldName: p.name,
+            newName: newNames[idx],
+            pickedBy: p.pickedBy,
+            index: idx
+          };
+        }
+      });
+
+      if (changedPickedPlayer) {
+        const cName = latestData.captainNames[changedPickedPlayer.pickedBy] || changedPickedPlayer.pickedBy;
+        document.getElementById("replaceModalText").innerText = 
+          `已被【${cName}】選取的球員「${changedPickedPlayer.oldName}」名稱即將更換為「${changedPickedPlayer.newName}」。\n\n請選擇處置方式：`;
+
+        pendingReplaceCallback = (mode) => {
+          applyPlayerListUpdate(newNames, changedPickedPlayer, mode);
+        };
+        document.getElementById("replaceModal").style.display = "flex";
+      } else {
+        applyPlayerListUpdate(newNames, null, null);
+      }
+    }
+
+    function resolvePlayerReplace(mode) {
+      document.getElementById("replaceModal").style.display = "none";
+      if (pendingReplaceCallback) pendingReplaceCallback(mode);
+    }
+
+    function applyPlayerListUpdate(newNames, replaceInfo, replaceMode) {
+      const teamCount = parseInt(document.getElementById("teamCountSelect").value);
+      const captainNames = {
+        Captain_A: document.getElementById("nameInput-A").value.trim() || defaultNames.Captain_A,
+        Captain_B: document.getElementById("nameInput-B").value.trim() || defaultNames.Captain_B
+      };
+      if (teamCount >= 3) captainNames.Captain_C = document.getElementById("nameInput-C").value.trim() || defaultNames.Captain_C;
+      if (teamCount === 4) captainNames.Captain_D = document.getElementById("nameInput-D").value.trim() || defaultNames.Captain_D;
+
+      const draftRef = db.ref("draft");
+      draftRef.transaction((currentData) => {
+        if (!currentData) return currentData;
+
+        currentData.teamCount = teamCount;
+        currentData.captainNames = captainNames;
+
+        let updatedPlayers = {};
+        newNames.forEach((name, idx) => {
+          const id = 'p' + (idx + 1);
+          const existing = currentData.players ? currentData.players[id] : null;
+
+          let pickedBy = existing ? existing.pickedBy : null;
+
+          if (replaceInfo && replaceInfo.id === id && replaceMode === 'repick') {
+            pickedBy = null; // Send back to pool
+          }
+
+          updatedPlayers[id] = { id: id, name: name, pickedBy: pickedBy };
+        });
+
+        currentData.players = updatedPlayers;
+
+        if (replaceMode === 'repick') {
+          // Recalculate turn index
+          const currentSnakeOrder = snakeOrderPresets[teamCount];
+          let captainCounts = { Captain_A: 0, Captain_B: 0, Captain_C: 0, Captain_D: 0 };
+          Object.values(updatedPlayers).forEach(p => { if (p.pickedBy) captainCounts[p.pickedBy]++; });
+
+          let newTurnIndex = 0;
+          for (let i = 0; i < currentSnakeOrder.length; i++) {
+            const cap = currentSnakeOrder[i];
+            if (captainCounts[cap] > 0) {
+              captainCounts[cap]--;
+            } else {
+              newTurnIndex = i;
+              break;
+            }
+          }
+          currentData.turnIndex = newTurnIndex;
+        }
+
+        return currentData;
+      }, (err, committed) => {
+        if (committed) alert("✅ 已成功更新球員名單！");
+        else alert("⚠️ 更新失敗，請重新嘗試。");
+      });
     }
 
     function initDraftByAdmin() {
       if (!isAdminLoggedIn) return;
+      if (!confirm("確定要【完全重置】整個選秀嗎？進度與選人記錄將全部清除！")) return;
 
       const teamCount = parseInt(document.getElementById("teamCountSelect").value);
       const inputText = document.getElementById("customPlayersInput").value.trim();
       let names = inputText.split(",").map(s => s.trim()).filter(s => s.length > 0);
-      
       const targetPlayerCount = teamCount * 4;
 
       if (names.length !== targetPlayerCount) {
-        alert(`⚠️ 人數設定錯誤！\n\n當前選取為 ${teamCount} 隊模式，球員總數必須為 ${targetPlayerCount} 位。\n目前輸入數量：${names.length} 位。`);
+        alert(`⚠️ 人數設定錯誤！${teamCount} 隊模式總數必須為 ${targetPlayerCount} 位（目前 ${names.length} 位）。`);
         return;
       }
 
@@ -709,13 +904,8 @@
         Captain_A: document.getElementById("nameInput-A").value.trim() || defaultNames.Captain_A,
         Captain_B: document.getElementById("nameInput-B").value.trim() || defaultNames.Captain_B
       };
-
-      if (teamCount >= 3) {
-        captainNames.Captain_C = document.getElementById("nameInput-C").value.trim() || defaultNames.Captain_C;
-      }
-      if (teamCount === 4) {
-        captainNames.Captain_D = document.getElementById("nameInput-D").value.trim() || defaultNames.Captain_D;
-      }
+      if (teamCount >= 3) captainNames.Captain_C = document.getElementById("nameInput-C").value.trim() || defaultNames.Captain_C;
+      if (teamCount === 4) captainNames.Captain_D = document.getElementById("nameInput-D").value.trim() || defaultNames.Captain_D;
 
       const initialPlayers = {};
       names.forEach((name, idx) => {
@@ -731,17 +921,15 @@
       });
 
       stagedPlayerId = null;
-      alert(`成功設定 ${teamCount} 隊模式 (${targetPlayerCount} 人) 並發佈新選秀！`);
+      alert(`已成功重置並開啟 ${teamCount} 隊全新選秀！`);
     }
 
     function clearAllSelections() {
       if (!isAdminLoggedIn) return;
-      if (!confirm("確定要清空所有選秀選擇嗎？所有球員將回到選秀池，並從第一回合重新開始。")) return;
+      if (!confirm("確定要清空所有選秀選擇嗎？球員名單將會保留。")) return;
 
-      const draftRef = db.ref("draft");
-      draftRef.transaction((currentData) => {
+      db.ref("draft").transaction((currentData) => {
         if (!currentData) return currentData;
-
         currentData.turnIndex = 0;
         if (currentData.players) {
           Object.keys(currentData.players).forEach(id => {
@@ -749,19 +937,29 @@
           });
         }
         return currentData;
-      }, (error, committed) => {
-        if (error || !committed) {
-          alert("清空失敗，請重試！");
-        } else {
-          stagedPlayerId = null;
-          alert("已成功清空所有選擇！");
+      });
+      stagedPlayerId = null;
+    }
+
+    function shuffleTeamOrders() {
+      if (!isAdminLoggedIn && myRole !== "Admin") return;
+      
+      const teamBoxes = ["Captain_A", "Captain_B", "Captain_C", "Captain_D"];
+      teamBoxes.forEach(cKey => {
+        const ul = document.getElementById("team-" + cKey);
+        if (ul) {
+          const items = Array.from(ul.children);
+          for (let i = items.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            ul.appendChild(items[j]);
+          }
         }
       });
+      alert("🎲 隊伍成員顯示順序已打亂！");
     }
 
     function checkOnlineUsers() {
       if (!isAdminLoggedIn) return;
-
       const modal = document.getElementById("onlineModal");
       const content = document.getElementById("onlineContent");
       content.innerHTML = "<p>正在讀取在線狀態...</p>";
@@ -770,8 +968,6 @@
       db.ref("presence/sessions").once("value", (snapshot) => {
         const sessions = snapshot.val() || {};
         const sessionList = Object.values(sessions);
-        const totalCount = sessionList.length;
-
         const cNames = (latestData && latestData.captainNames) ? latestData.captainNames : defaultNames;
 
         let viewerCount = 0;
@@ -779,8 +975,7 @@
 
         sessionList.forEach(s => {
           if (s.role && s.role.startsWith("Captain_")) {
-            const captainTitle = cNames[s.role] || s.role;
-            activeRoles.push(`🧢 <strong>${captainTitle}</strong> (${s.role})`);
+            activeRoles.push(`🧢 <strong>${cNames[s.role] || s.role}</strong>`);
           } else if (s.role === "Admin") {
             activeRoles.push(`🔑 <strong>管理員 (Admin)</strong>`);
           } else {
@@ -788,42 +983,22 @@
           }
         });
 
-        let html = `<p style="margin-bottom:10px; font-weight:bold; font-size:1rem; color:var(--primary-color);">🌐 當前在線總人數：${totalCount} 人</p>`;
-        
-        html += '<ul class="online-list">';
-        
-        if (activeRoles.length > 0) {
-          activeRoles.forEach(item => {
-            html += `<li>🟢 ${item}</li>`;
-          });
-        }
-        
-        if (viewerCount > 0) {
-          html += `<li>👀 <strong>觀眾 (Viewer)</strong>：${viewerCount} 人在線觀看中</li>`;
-        }
-
-        if (totalCount === 0) {
-          html += `<li style="color:#888;">目前沒有連線中的使用者。</li>`;
-        }
-
+        let html = `<p style="margin-bottom:10px; font-weight:bold; color:var(--primary-color);">🌐 在線總人數：${sessionList.length} 人</p><ul class="online-list">`;
+        activeRoles.forEach(item => { html += `<li>🟢 ${item}</li>`; });
+        if (viewerCount > 0) html += `<li>👀 <strong>觀眾 (Viewer)</strong>：${viewerCount} 人</li>`;
         html += '</ul>';
-
         content.innerHTML = html;
       });
     }
 
-    function closeOnlineModal() {
-      document.getElementById("onlineModal").style.display = "none";
-    }
+    function closeOnlineModal() { document.getElementById("onlineModal").style.display = "none"; }
 
     function adminRemovePlayer(playerId, captainKey) {
       if (!isAdminLoggedIn) return;
-      if (!confirm("確定要撤銷此選擇嗎？系統將會將回合重新交回給該隊長！")) return;
+      if (!confirm("確定要撤銷此選擇嗎？")) return;
 
-      const draftRef = db.ref("draft");
-      draftRef.transaction((currentData) => {
+      db.ref("draft").transaction((currentData) => {
         if (!currentData) return currentData;
-
         const teamCount = currentData.teamCount || 4;
         const currentSnakeOrder = snakeOrderPresets[teamCount];
 
@@ -847,15 +1022,8 @@
             count++;
           }
         }
-
         currentData.turnIndex = newTurnIndex;
         return currentData;
-      }, (error, committed) => {
-        if (error || !committed) {
-          alert("撤銷操作失敗，請重試！");
-        } else {
-          stagedPlayerId = null;
-        }
       });
     }
 
@@ -873,9 +1041,9 @@
       if (!stagedPlayerId) return;
 
       const playerId = stagedPlayerId;
-      const draftRef = db.ref("draft");
+      const effectiveRole = getEffectiveRole();
 
-      draftRef.transaction((currentData) => {
+      db.ref("draft").transaction((currentData) => {
         if (!currentData) return currentData;
 
         const teamCount = currentData.teamCount || 4;
@@ -885,18 +1053,16 @@
         if (turnIndex >= currentSnakeOrder.length) return currentData;
 
         const expectedCaptain = currentSnakeOrder[turnIndex];
-        if (myRole !== expectedCaptain) return; 
+        if (effectiveRole !== expectedCaptain) return; 
 
         if (currentData.players && currentData.players[playerId] && !currentData.players[playerId].pickedBy) {
-          currentData.players[playerId].pickedBy = myRole;
+          currentData.players[playerId].pickedBy = effectiveRole;
           currentData.turnIndex = turnIndex + 1;
         }
 
         return currentData;
       }, (error, committed) => {
-        if (error) {
-          alert("選人失敗，請檢查 Firebase 連線設定！");
-        } else if (committed) {
+        if (committed) {
           stagedPlayerId = null;
         } else {
           alert("動作無效：現在不是你的 Turn，或該球員已被其他人搶選！");
@@ -920,39 +1086,39 @@
       const boxD = document.getElementById("box-Captain_D");
 
       if (teamCount === 2) {
-        if (optC) optC.style.display = "none";
-        if (boxC) boxC.style.display = "none";
-        if (optD) optD.style.display = "none";
-        if (boxD) boxD.style.display = "none";
+        if (optC) optC.style.display = "none"; if (boxC) boxC.style.display = "none";
+        if (optD) optD.style.display = "none"; if (boxD) boxD.style.display = "none";
       } else if (teamCount === 3) {
-        if (optC) optC.style.display = "block";
-        if (boxC) boxC.style.display = "block";
-        if (optD) optD.style.display = "none";
-        if (boxD) boxD.style.display = "none";
+        if (optC) optC.style.display = "block"; if (boxC) boxC.style.display = "block";
+        if (optD) optD.style.display = "none"; if (boxD) boxD.style.display = "none";
       } else {
-        if (optC) optC.style.display = "block";
-        if (boxC) boxC.style.display = "block";
-        if (optD) optD.style.display = "block";
-        if (boxD) boxD.style.display = "block";
+        if (optC) optC.style.display = "block"; if (boxC) boxC.style.display = "block";
+        if (optD) optD.style.display = "block"; if (boxD) boxD.style.display = "block";
       }
 
       Object.keys(cNames).forEach(key => {
         const titleEl = document.getElementById("title-" + key);
         const optEl = document.getElementById("opt-" + key);
+        const proxyOptEl = document.getElementById("proxy-opt-" + key);
         if (titleEl) titleEl.innerText = cNames[key];
         if (optEl) optEl.innerText = "🧢 " + cNames[key];
+        if (proxyOptEl) proxyOptEl.innerText = "代理 " + cNames[key];
       });
 
       const statusTitle = document.getElementById("statusTitle");
       const statusDesc = document.getElementById("statusDesc");
       const confirmBar = document.getElementById("confirmBar");
+      const shuffleContainer = document.getElementById("shuffleContainer");
 
       ["Captain_A", "Captain_B", "Captain_C", "Captain_D"].forEach(c => {
         const box = document.getElementById("box-" + c);
         if (box) box.classList.remove("active-turn");
       });
 
+      const effectiveRole = getEffectiveRole();
+
       if (turnIndex < snakeOrder.length) {
+        shuffleContainer.style.display = "none";
         const currentCaptainKey = snakeOrder[turnIndex];
         const currentCaptainName = cNames[currentCaptainKey] || currentCaptainKey;
         const round = Math.floor(turnIndex / teamCount) + 1;
@@ -962,9 +1128,10 @@
         const activeBox = document.getElementById("box-" + currentCaptainKey);
         if (activeBox) activeBox.classList.add("active-turn");
 
-        if (myRole === currentCaptainKey) {
-          statusDesc.innerText = "👉 現在是你的回合！點擊球員進行預選。";
-          statusDesc.style.color = "#e76f51";
+        if (effectiveRole === currentCaptainKey) {
+          const isProxyText = (myRole === "Admin" && adminProxyRole !== "None") ? " [管理員代理中]" : "";
+          statusDesc.innerText = `👉 現在是你的回合！點擊球員進行預選。${isProxyText}`;
+          statusDesc.style.color = "var(--accent-color)";
           statusDesc.style.fontWeight = "bold";
 
           if (stagedPlayerId && players[stagedPlayerId]) {
@@ -975,15 +1142,16 @@
           }
         } else {
           statusDesc.innerText = `正在等待 ${currentCaptainName} 選人...`;
-          statusDesc.style.color = "#555";
+          statusDesc.style.color = "var(--text-color)";
           statusDesc.style.fontWeight = "normal";
           confirmBar.style.display = "none";
         }
       } else {
         statusTitle.innerText = "🎉 選秀完成！";
         statusDesc.innerText = `所有隊伍已完成 ${teamCount * 4} 人選秀。`;
-        statusDesc.style.color = "#2b5c8f";
+        statusDesc.style.color = "var(--primary-color)";
         confirmBar.style.display = "none";
+        if (isAdminLoggedIn) shuffleContainer.style.display = "block";
       }
 
       document.getElementById("playerPool").innerHTML = "";
@@ -1000,7 +1168,7 @@
           btn.innerText = player.name;
 
           const currentCaptainKey = snakeOrder[turnIndex];
-          btn.disabled = (myRole !== currentCaptainKey || turnIndex >= snakeOrder.length);
+          btn.disabled = (effectiveRole !== currentCaptainKey || turnIndex >= snakeOrder.length);
 
           if (player.id === stagedPlayerId) {
             btn.classList.add("staged");
@@ -1043,6 +1211,7 @@
       renderUI();
     });
 
+    initTheme();
     initVisitorPresence();
     toggleAdminTeamMode();
   </script>

@@ -182,7 +182,7 @@
     }
     .admin-grid { 
       display: grid; 
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); 
       gap: 8px; 
       margin-top: 6px; 
     }
@@ -198,7 +198,7 @@
       background: var(--input-bg);
       color: var(--text-color);
       margin-top: 6px; 
-      margin-bottom: 10px; 
+      margin-bottom: 8px; 
       resize: vertical; 
       font-family: inherit; 
       font-size: 0.95rem;
@@ -292,7 +292,7 @@
 
     .teams-grid { 
       display: grid; 
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
       gap: 10px; 
     }
     .team-box { 
@@ -445,6 +445,7 @@
       <option value="Captain_B" id="opt-Captain_B">🧢 隊長 B</option>
       <option value="Captain_C" id="opt-Captain_C">🧢 隊長 C</option>
       <option value="Captain_D" id="opt-Captain_D">🧢 隊長 D</option>
+      <option value="Captain_E" id="opt-Captain_E">🧢 隊長 E</option>
       <option value="Admin">🔑 管理員 (Admin)</option>
     </select>
     <span id="adminBadge" style="display:none; color: var(--admin-color); font-weight:bold;">[Admin]</span>
@@ -478,7 +479,15 @@
         <option value="Captain_B" id="proxy-opt-Captain_B">代理 隊長 B</option>
         <option value="Captain_C" id="proxy-opt-Captain_C">代理 隊長 C</option>
         <option value="Captain_D" id="proxy-opt-Captain_D">代理 隊長 D</option>
+        <option value="Captain_E" id="proxy-opt-Captain_E">代理 隊長 E</option>
       </select>
+    </div>
+
+    <!-- Smart WhatsApp Ingestion -->
+    <div class="admin-setting-group" style="background: rgba(42,157,143,0.1); padding: 10px; border-radius: 8px; border: 1px solid var(--confirm-color);">
+      <p style="font-size:0.95rem; font-weight:bold; color: var(--confirm-color);">📋 智能匯入 WhatsApp 報名名單：</p>
+      <textarea id="whatsappRawInput" style="height:70px;" placeholder="直接在此貼上包含頭銜、序號的 WhatsApp 訊息..."></textarea>
+      <button class="btn-admin-info" style="width: 100%; padding: 8px;" onclick="parseWhatsAppList()">⚡ 解析名單並填入下方</button>
     </div>
 
     <div class="admin-setting-group">
@@ -487,16 +496,18 @@
         <option value="2">2 隊模式 (共 8 位球員)</option>
         <option value="3">3 隊模式 (共 12 位球員)</option>
         <option value="4" selected>4 隊模式 (共 16 位球員)</option>
+        <option value="5">5 隊模式 (共 20 位球員)</option>
       </select>
     </div>
 
     <div class="admin-setting-group">
       <p style="font-size:0.95rem; font-weight:bold;">2. 自訂隊長/隊伍名稱：</p>
       <div class="admin-grid">
-        <input type="text" id="nameInput-A" placeholder="Captain A (預設: 隊長 A)">
-        <input type="text" id="nameInput-B" placeholder="Captain B (預設: 隊長 B)">
-        <input type="text" id="nameInput-C" placeholder="Captain C (預設: 隊長 C)">
-        <input type="text" id="nameInput-D" placeholder="Captain D (預設: 隊長 D)">
+        <input type="text" id="nameInput-A" placeholder="Captain A (隊長 A)">
+        <input type="text" id="nameInput-B" placeholder="Captain B (隊長 B)">
+        <input type="text" id="nameInput-C" placeholder="Captain C (隊長 C)">
+        <input type="text" id="nameInput-D" placeholder="Captain D (隊長 D)">
+        <input type="text" id="nameInput-E" placeholder="Captain E (隊長 E)">
       </div>
     </div>
 
@@ -540,6 +551,10 @@
         <div class="team-box" id="box-Captain_D">
           <h3><span id="title-Captain_D">隊長 D</span> <span class="badge" id="count-Captain_D">0/4</span></h3>
           <ul id="team-Captain_D"></ul>
+        </div>
+        <div class="team-box" id="box-Captain_E">
+          <h3><span id="title-Captain_E">隊長 E</span> <span class="badge" id="count-Captain_E">0/4</span></h3>
+          <ul id="team-Captain_E"></ul>
         </div>
       </div>
       
@@ -609,18 +624,19 @@
     const snakeOrderPresets = {
       2: ["Captain_A", "Captain_B", "Captain_B", "Captain_A", "Captain_A", "Captain_B", "Captain_B", "Captain_A"],
       3: ["Captain_A", "Captain_B", "Captain_C", "Captain_C", "Captain_B", "Captain_A", "Captain_A", "Captain_B", "Captain_C", "Captain_C", "Captain_B", "Captain_A"],
-      4: ["Captain_A", "Captain_B", "Captain_C", "Captain_D", "Captain_D", "Captain_C", "Captain_B", "Captain_A", "Captain_A", "Captain_B", "Captain_C", "Captain_D", "Captain_D", "Captain_C", "Captain_B", "Captain_A"]
+      4: ["Captain_A", "Captain_B", "Captain_C", "Captain_D", "Captain_D", "Captain_C", "Captain_B", "Captain_A", "Captain_A", "Captain_B", "Captain_C", "Captain_D", "Captain_D", "Captain_C", "Captain_B", "Captain_A"],
+      5: ["Captain_A", "Captain_B", "Captain_C", "Captain_D", "Captain_E", "Captain_E", "Captain_D", "Captain_C", "Captain_B", "Captain_A", "Captain_A", "Captain_B", "Captain_C", "Captain_D", "Captain_E", "Captain_E", "Captain_D", "Captain_C", "Captain_B", "Captain_A"]
     };
 
     let myRole = "Viewer";
-    let adminProxyRole = "None"; // Admin proxy role option
+    let adminProxyRole = "None";
     let isAdminLoggedIn = false;
     let latestData = null;
     let stagedPlayerId = null; 
     let mySessionRef = null;
     let pendingReplaceCallback = null;
 
-    const defaultNames = { Captain_A: "隊長 A", Captain_B: "隊長 B", Captain_C: "隊長 C", Captain_D: "隊長 D" };
+    const defaultNames = { Captain_A: "隊長 A", Captain_B: "隊長 B", Captain_C: "隊長 C", Captain_D: "隊長 D", Captain_E: "隊長 E" };
 
     // Theme Management
     function changeTheme(theme) {
@@ -649,6 +665,54 @@
       adminProxyRole = document.getElementById("adminProxySelect").value;
       stagedPlayerId = null;
       renderUI();
+    }
+
+    function parseWhatsAppList() {
+      const rawText = document.getElementById("whatsappRawInput").value;
+      if (!rawText.trim()) {
+        alert("⚠️ 請先貼上 WhatsApp 報名訊息！");
+        return;
+      }
+
+      const lines = rawText.split('\n');
+      const parsedPlayers = [];
+
+      lines.forEach(line => {
+        // Strip invisible characters (like WhatsApp zero-width space \u200B)
+        let cleaned = line.replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
+        
+        // Match line format starting with index number e.g., "1. 雲尼", "12. Kent's fd", "3) Johnny"
+        const match = cleaned.match(/^\d+[\.\)\s\-]+(.*)/);
+        if (match && match[1]) {
+          let playerName = match[1].trim();
+          if (playerName.length > 0) {
+            parsedPlayers.push(playerName);
+          }
+        }
+      });
+
+      if (parsedPlayers.length === 0) {
+        alert("⚠️ 無法辨識名單！請確定訊息格式包含序號（例如：1. 名字）。");
+        return;
+      }
+
+      // Populate text box
+      document.getElementById("customPlayersInput").value = parsedPlayers.join(", ");
+
+      // Auto Adjust Team Mode dropdown if parsed count matches preset
+      const count = parsedPlayers.length;
+      if (count === 8) document.getElementById("teamCountSelect").value = "2";
+      else if (count === 12) document.getElementById("teamCountSelect").value = "3";
+      else if (count === 16) document.getElementById("teamCountSelect").value = "4";
+      else if (count === 20) document.getElementById("teamCountSelect").value = "5";
+
+      toggleAdminTeamMode();
+
+      let msg = `⚡ 成功解析 ${count} 位球員！`;
+      if (count % 4 !== 0) {
+        msg += `\n⚠️ 提醒：目前解析出 ${count} 人，並非 4 的倍數 (例如 8, 12, 16, 20 人)。請檢查名單或增刪球員。`;
+      }
+      alert(msg);
     }
 
     function initVisitorPresence() {
@@ -749,6 +813,7 @@
         if (latestData.captainNames.Captain_B) document.getElementById("nameInput-B").value = latestData.captainNames.Captain_B;
         if (latestData.captainNames.Captain_C) document.getElementById("nameInput-C").value = latestData.captainNames.Captain_C;
         if (latestData.captainNames.Captain_D) document.getElementById("nameInput-D").value = latestData.captainNames.Captain_D;
+        if (latestData.captainNames.Captain_E) document.getElementById("nameInput-E").value = latestData.captainNames.Captain_E;
       }
       if (latestData.players) {
         const playerNamesArr = Object.values(latestData.players).map(p => p.name);
@@ -758,28 +823,29 @@
 
     function toggleAdminTeamMode() {
       const count = parseInt(document.getElementById("teamCountSelect").value);
-      const inputC = document.getElementById("nameInput-C");
-      const inputD = document.getElementById("nameInput-D");
-      const proxyOptC = document.getElementById("proxy-opt-Captain_C");
-      const proxyOptD = document.getElementById("proxy-opt-Captain_D");
+      const inputs = {
+        C: document.getElementById("nameInput-C"),
+        D: document.getElementById("nameInput-D"),
+        E: document.getElementById("nameInput-E")
+      };
+      const proxyOpts = {
+        C: document.getElementById("proxy-opt-Captain_C"),
+        D: document.getElementById("proxy-opt-Captain_D"),
+        E: document.getElementById("proxy-opt-Captain_E")
+      };
       const label = document.getElementById("playerInputLabel");
       
-      if (count === 2) {
-        inputC.style.display = "none"; inputD.style.display = "none";
-        proxyOptC.style.display = "none"; proxyOptD.style.display = "none";
-        label.innerText = "3. 球員名單 (8 位，英文逗號隔開)：";
-      } else if (count === 3) {
-        inputC.style.display = "block"; inputD.style.display = "none";
-        proxyOptC.style.display = "block"; proxyOptD.style.display = "none";
-        label.innerText = "3. 球員名單 (12 位，英文逗號隔開)：";
-      } else {
-        inputC.style.display = "block"; inputD.style.display = "block";
-        proxyOptC.style.display = "block"; proxyOptD.style.display = "block";
-        label.innerText = "3. 球員名單 (16 位，英文逗號隔開)：";
-      }
+      inputs.C.style.display = count >= 3 ? "block" : "none";
+      inputs.D.style.display = count >= 4 ? "block" : "none";
+      inputs.E.style.display = count >= 5 ? "block" : "none";
+
+      proxyOpts.C.style.display = count >= 3 ? "block" : "none";
+      proxyOpts.D.style.display = count >= 4 ? "block" : "none";
+      proxyOpts.E.style.display = count >= 5 ? "block" : "none";
+
+      label.innerText = `3. 球員名單 (${count * 4} 位，英文逗號隔開)：`;
     }
 
-    // Safe Update Player List without destroying draft progress
     function updatePlayerListSafe() {
       if (!isAdminLoggedIn || !latestData) return;
 
@@ -796,7 +862,6 @@
       const existingPlayers = Object.values(latestData.players || {});
       let changedPickedPlayer = null;
 
-      // Detect if an already-picked player name changed
       existingPlayers.forEach((p, idx) => {
         if (p.pickedBy && newNames[idx] && p.name !== newNames[idx]) {
           changedPickedPlayer = {
@@ -835,7 +900,8 @@
         Captain_B: document.getElementById("nameInput-B").value.trim() || defaultNames.Captain_B
       };
       if (teamCount >= 3) captainNames.Captain_C = document.getElementById("nameInput-C").value.trim() || defaultNames.Captain_C;
-      if (teamCount === 4) captainNames.Captain_D = document.getElementById("nameInput-D").value.trim() || defaultNames.Captain_D;
+      if (teamCount >= 4) captainNames.Captain_D = document.getElementById("nameInput-D").value.trim() || defaultNames.Captain_D;
+      if (teamCount >= 5) captainNames.Captain_E = document.getElementById("nameInput-E").value.trim() || defaultNames.Captain_E;
 
       const draftRef = db.ref("draft");
       draftRef.transaction((currentData) => {
@@ -852,7 +918,7 @@
           let pickedBy = existing ? existing.pickedBy : null;
 
           if (replaceInfo && replaceInfo.id === id && replaceMode === 'repick') {
-            pickedBy = null; // Send back to pool
+            pickedBy = null;
           }
 
           updatedPlayers[id] = { id: id, name: name, pickedBy: pickedBy };
@@ -861,9 +927,8 @@
         currentData.players = updatedPlayers;
 
         if (replaceMode === 'repick') {
-          // Recalculate turn index
           const currentSnakeOrder = snakeOrderPresets[teamCount];
-          let captainCounts = { Captain_A: 0, Captain_B: 0, Captain_C: 0, Captain_D: 0 };
+          let captainCounts = { Captain_A: 0, Captain_B: 0, Captain_C: 0, Captain_D: 0, Captain_E: 0 };
           Object.values(updatedPlayers).forEach(p => { if (p.pickedBy) captainCounts[p.pickedBy]++; });
 
           let newTurnIndex = 0;
@@ -905,7 +970,8 @@
         Captain_B: document.getElementById("nameInput-B").value.trim() || defaultNames.Captain_B
       };
       if (teamCount >= 3) captainNames.Captain_C = document.getElementById("nameInput-C").value.trim() || defaultNames.Captain_C;
-      if (teamCount === 4) captainNames.Captain_D = document.getElementById("nameInput-D").value.trim() || defaultNames.Captain_D;
+      if (teamCount >= 4) captainNames.Captain_D = document.getElementById("nameInput-D").value.trim() || defaultNames.Captain_D;
+      if (teamCount >= 5) captainNames.Captain_E = document.getElementById("nameInput-E").value.trim() || defaultNames.Captain_E;
 
       const initialPlayers = {};
       names.forEach((name, idx) => {
@@ -944,7 +1010,7 @@
     function shuffleTeamOrders() {
       if (!isAdminLoggedIn && myRole !== "Admin") return;
       
-      const teamBoxes = ["Captain_A", "Captain_B", "Captain_C", "Captain_D"];
+      const teamBoxes = ["Captain_A", "Captain_B", "Captain_C", "Captain_D", "Captain_E"];
       teamBoxes.forEach(cKey => {
         const ul = document.getElementById("team-" + cKey);
         if (ul) {
@@ -1080,21 +1146,14 @@
       const players = latestData.players || {};
       const cNames = latestData.captainNames || defaultNames;
 
-      const optC = document.getElementById("opt-Captain_C");
-      const boxC = document.getElementById("box-Captain_C");
-      const optD = document.getElementById("opt-Captain_D");
-      const boxD = document.getElementById("box-Captain_D");
-
-      if (teamCount === 2) {
-        if (optC) optC.style.display = "none"; if (boxC) boxC.style.display = "none";
-        if (optD) optD.style.display = "none"; if (boxD) boxD.style.display = "none";
-      } else if (teamCount === 3) {
-        if (optC) optC.style.display = "block"; if (boxC) boxC.style.display = "block";
-        if (optD) optD.style.display = "none"; if (boxD) boxD.style.display = "none";
-      } else {
-        if (optC) optC.style.display = "block"; if (boxC) boxC.style.display = "block";
-        if (optD) optD.style.display = "block"; if (boxD) boxD.style.display = "block";
-      }
+      const caps = ["Captain_C", "Captain_D", "Captain_E"];
+      caps.forEach((cap, idx) => {
+        const requiredTeams = idx + 3;
+        const opt = document.getElementById("opt-" + cap);
+        const box = document.getElementById("box-" + cap);
+        if (opt) opt.style.display = teamCount >= requiredTeams ? "block" : "none";
+        if (box) box.style.display = teamCount >= requiredTeams ? "block" : "none";
+      });
 
       Object.keys(cNames).forEach(key => {
         const titleEl = document.getElementById("title-" + key);
@@ -1110,7 +1169,7 @@
       const confirmBar = document.getElementById("confirmBar");
       const shuffleContainer = document.getElementById("shuffleContainer");
 
-      ["Captain_A", "Captain_B", "Captain_C", "Captain_D"].forEach(c => {
+      ["Captain_A", "Captain_B", "Captain_C", "Captain_D", "Captain_E"].forEach(c => {
         const box = document.getElementById("box-" + c);
         if (box) box.classList.remove("active-turn");
       });
@@ -1155,8 +1214,8 @@
       }
 
       document.getElementById("playerPool").innerHTML = "";
-      const teamCounts = { Captain_A: 0, Captain_B: 0, Captain_C: 0, Captain_D: 0 };
-      ["Captain_A", "Captain_B", "Captain_C", "Captain_D"].forEach(c => {
+      const teamCounts = { Captain_A: 0, Captain_B: 0, Captain_C: 0, Captain_D: 0, Captain_E: 0 };
+      ["Captain_A", "Captain_B", "Captain_C", "Captain_D", "Captain_E"].forEach(c => {
         const ul = document.getElementById("team-" + c);
         if (ul) ul.innerHTML = "";
       });
